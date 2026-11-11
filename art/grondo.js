@@ -37,7 +37,7 @@ function geye(t,x,y,r,M){const{p,c,G}=t,ir=r*.66,px=r*.22,py=r*.04+(M.py||0),id=
  if(M.lid<.5)s+=`<ellipse class="lid" rx="${f(r*.98)}" ry="${f(r*1.05)}" fill="${c.body}" stroke="${L}" stroke-width="3"/>`;
  return s+`<ellipse class="ol" rx="${f(rx)}" ry="${r}" fill="none"/></g>`}
 
-Object.assign(D[0],{H:[52,-262],hand:[140,-134],
+Object.assign(D[0],{H:[52,-262],hand:[140,-134],hat:[0,-4,1.12],
  c:{body:'#5b6c9a',hi:'#b4c4ea',dark:'#2c375e',deep:'#1c2444',belly:'#f6f8ff',belly2:'#aeb8de',bl:'#8590bf',sp:'#f2ffff',sp2:'#2fb8e6',spd:'#1a6f9c',i1:'#ffe27a',i2:'#e8590c',glow:'#7df9ff'},
  body(t){const{c,gb,p,G}=t,baby=t.k=='bebe',pl=baby?'gbump':'gplate',pf=baby?'gbumpFar':'gfar';
   const TAILP='M-36 -128 C-96 -132,-158 -112,-198 -74 C-214 -58,-230 -52,-246 -66 C-256 -76,-268 -74,-268 -60 C-268 -24,-232 0,-190 0 C-140 0,-88 -6,-36 -10 Z',

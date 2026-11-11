@@ -478,7 +478,8 @@ function mon(d,k,u,full,o={}){const p=ST[k],c=d.c,bs=p.bs,hs=p.hs,G=n=>n+d.id+k+
  t.k=k;t.mood=o.mood||"content";t.pose=o.pose||"debout";
  t.held=p.hold&&full?`<g transform="translate(${d.hand}) rotate(-24)">${car(0,0,'#ff5a5a',1,1.25)}</g>`:'';
  const bm=d.bm||[0,0],beam=p.beam&&full?`<g transform="translate(${bm})"><g class="beam"><path d="M90 16 L640 110 L600 250 L90 36 Z" fill="url(#${G('gbm')})" filter="${t.fl}"/><path d="M92 20 L620 150 L604 208 L92 32 Z" fill="url(#${G('gbm')})"/><path d="M94 23 L560 160 L556 178 L94 29 Z" fill="#fff" opacity=".9"/></g></g>`:'';
- const hat=p.hat&&d.hat?`<g transform="translate(${d.hat[0]},${d.hat[1]}) scale(${d.hat[2]})" style="--lw:${f2(1/(hs*d.hat[2]))}"><path class="ol" d="M-52 -40 L-40 -58 L-27 -44 L-13 -64 L2 -48 L17 -66 L31 -50 L45 -60 L52 -40 C44 -92,-36 -96,-52 -40 Z" fill="#fffaf0"/><circle cx="-18" cy="-72" r="6" fill="#7fe0c3"/><circle cx="14" cy="-76" r="4.5" fill="#ff9ecb"/><circle cx="32" cy="-66" r="3.5" fill="#ffd23f"/></g>`:'';
+ const SHELL='M-66 -38 L-52 -60 L-36 -42 L-20 -66 L-2 -46 L16 -68 L34 -44 L50 -62 L66 -38 C70 -150,-70 -150,-66 -38 Z';
+ const hat=p.hat&&d.hat?`<g transform="translate(${d.hat[0]},${d.hat[1]}) scale(${d.hat[2]})" style="--lw:${f2(1/(hs*d.hat[2]))}"><clipPath id="${G('csh')}"><path d="${SHELL}"/></clipPath><path d="${SHELL}" fill="#fffaf0"/><g clip-path="url(#${G('csh')})"><circle cx="-28" cy="-96" r="10" fill="${c.sp2}"/><circle cx="20" cy="-106" r="8" fill="${c.belly2}"/><circle cx="42" cy="-76" r="7" fill="${c.sp2}"/><circle cx="-48" cy="-68" r="6" fill="${c.belly2}"/><circle cx="2" cy="-78" r="5" fill="${c.hi}"/><path d="M18 -126 C54 -112,66 -72,62 -36 L90 -36 L90 -140 Z" fill="#e2a45c" opacity=".32"/><ellipse cx="-36" cy="-104" rx="8" ry="16" fill="#fff" opacity=".85" transform="rotate(34 -36 -104)"/></g><path d="M-4 -124 l8 13 l-10 9 l7 11" stroke="${L}" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/><path class="ol" d="${SHELL}" fill="none"/></g>`:'';
  let s=`<defs><radialGradient id="${G('gb')}" cx=".62" cy=".28" r=".9"><stop offset="0" stop-color="${c.hi}"/><stop offset=".5" stop-color="${c.body}"/><stop offset="1" stop-color="${c.dark}"/></radialGradient>
  <linearGradient id="${G('gl')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.belly}"/><stop offset="1" stop-color="${c.belly2}"/></linearGradient>
  <linearGradient id="${G('gs')}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${c.sp2}"/><stop offset="1" stop-color="${c.sp}"/></linearGradient>
@@ -541,7 +542,7 @@ function geye(t,x,y,r,M){const{p,c,G}=t,ir=r*.66,px=r*.22,py=r*.04+(M.py||0),id=
  if(M.lid<.5)s+=`<ellipse class="lid" rx="${f(r*.98)}" ry="${f(r*1.05)}" fill="${c.body}" stroke="${L}" stroke-width="3"/>`;
  return s+`<ellipse class="ol" rx="${f(rx)}" ry="${r}" fill="none"/></g>`}
 
-Object.assign(D[0],{H:[52,-262],hand:[140,-134],
+Object.assign(D[0],{H:[52,-262],hand:[140,-134],hat:[0,-4,1.12],
  c:{body:'#5b6c9a',hi:'#b4c4ea',dark:'#2c375e',deep:'#1c2444',belly:'#f6f8ff',belly2:'#aeb8de',bl:'#8590bf',sp:'#f2ffff',sp2:'#2fb8e6',spd:'#1a6f9c',i1:'#ffe27a',i2:'#e8590c',glow:'#7df9ff'},
  body(t){const{c,gb,p,G}=t,baby=t.k=='bebe',pl=baby?'gbump':'gplate',pf=baby?'gbumpFar':'gfar';
   const TAILP='M-36 -128 C-96 -132,-158 -112,-198 -74 C-214 -58,-230 -52,-246 -66 C-256 -76,-268 -74,-268 -60 C-268 -24,-232 0,-190 0 C-140 0,-88 -6,-36 -10 Z',
@@ -628,7 +629,7 @@ Object.assign(D[0],{H:[52,-262],hand:[140,-134],
   return s+'</g>'}
 });
 /* ---------- planche de validation ---------- */
-const VB={bebe:'-185 -258 360 290',ado:'-240 -332 440 360',adulte:'-290 -398 520 420',titan:'-335 -440 590 475'};
+const VB={bebe:'-190 -296 370 328',ado:'-240 -332 440 360',adulte:'-290 -398 520 420',titan:'-335 -440 590 475'};
 const MOODN={content:'Content',faim:'Affamé',triste:'Triste',fatigue:'Fatigué',colere:'En colère',dodo:'Endormi',miam:'Régal'};
 const POSEN={debout:'Debout',mange:'Mange',frappe:'Frappe'};
 let cellN=0;

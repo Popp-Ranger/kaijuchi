@@ -1,5 +1,5 @@
 /* ---------- planche de validation ---------- */
-const VB={bebe:'-185 -258 360 290',ado:'-240 -332 440 360',adulte:'-290 -398 520 420',titan:'-335 -440 590 475'};
+const VB={bebe:'-190 -296 370 328',ado:'-240 -332 440 360',adulte:'-290 -398 520 420',titan:'-335 -440 590 475'};
 const MOODN={content:'Content',faim:'Affamé',triste:'Triste',fatigue:'Fatigué',colere:'En colère',dodo:'Endormi',miam:'Régal'};
 const POSEN={debout:'Debout',mange:'Mange',frappe:'Frappe'};
 let cellN=0;
