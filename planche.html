@@ -486,7 +486,7 @@ function mon(d,k,u,full,o={}){const p=ST[k],c=d.c,bs=p.bs,hs=p.hs,G=n=>n+d.id+k+
  <linearGradient id="${G('gbm')}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="${c.glow}"/><stop offset="1" stop-color="${c.sp2}" stop-opacity="0"/></linearGradient>
  <filter id="${G('fl')}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7"/></filter></defs>`;
  s+=`<ellipse cx="-14" cy="3" rx="${f((d.sh||160)*bs)}" ry="${f(15*bs)}" fill="${L}" opacity=".24"/><g class="breath"><g transform="scale(${bs})" style="--lw:${f2(1/bs)}">${d.body(t)}</g>`;
- s+=`<g transform="translate(${f(d.H[0]*bs)},${f(d.H[1]*bs-(1-bs)*(d.lift||0))}) scale(${hs})" style="--lw:${f2(1/hs)}"><g class="nod">${beam}${d.head(t)}${hat}</g></g></g>`;
+ s+=`<g transform="translate(${f(d.H[0]*bs)},${f(d.H[1]*bs-(1-bs)*(d.lift||0))}) scale(${hs})" style="--lw:${f2(1/hs)}"><g class="nod">${beam}${d.head(t)}${hat}</g></g>${t.front?`<g transform="scale(${bs})" style="--lw:${f2(1/bs)}">${t.front}</g>`:""}</g>`;
  return s}
 function egg(u,d){const e=d.c,ec=[e.body,e.sp2,e.belly2,e.hi,e.sp2,e.sp,e.body];return `<defs><radialGradient id="gegg${u}" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#fff3d6"/><stop offset="1" stop-color="#f3c98a"/></radialGradient>
 <clipPath id="cegg${u}"><path d="M0 -206 C52 -206,84 -132,84 -82 C84 -34,48 -6,0 -6 C-48 -6,-84 -34,-84 -82 C-84 -132,-52 -206,0 -206 Z"/></clipPath></defs>
@@ -553,8 +553,9 @@ Object.assign(D[0],{H:[52,-262],hand:[140,-134],
   const aa=t.pose=='frappe'?-82:t.pose=='mange'?-28:0;
   const back=[[-30,-218,-30,1],[-62,-181,-52,1.3],[-81,-131,-76,1.25],[-79,-85,-98,.95]],tl=[[-100,-125,-8,.8],[-146,-111,-22,.68],[-187,-81,-40,.52],[-224,-59,-36,.38]];
   const far=a=>a.map(q=>[q[0]+12,q[1]-7,q[2]+6,q[3]*.9]);
+  let s=`<g transform="translate(-56,-6)">${ol(LEGP,c.dark)}${toes('#cfc7b0')}<path d="M-22 -74 C-26 -116,10 -132,44 -124 C10 -110,0 -70,10 -30 L-2 -30 C-14 -42,-20 -58,-22 -74 Z" fill="${c.deep}" opacity=".4"/></g>`;
   // queue
-  let s=orns(pf,t,far(tl),t.bs,t.ss,0)+orns(pl,t,tl,t.bs,t.ss);
+  s+=orns(pf,t,far(tl),t.bs,t.ss,0)+orns(pl,t,tl,t.bs,t.ss);
   s+=`<clipPath id="${G('ct')}"><path d="${TAILP}"/></clipPath>`+ol(TAILP,gb)+`<g clip-path="url(#${G('ct')})"><path d="M-270 -52 C-256 -18,-228 -3,-190 -3 C-140 -3,-88 -8,-34 -13 L-34 -36 C-90 -34,-150 -30,-196 -22 C-226 -18,-252 -30,-262 -56 Z" fill="url(#${G('gl')})"/>
   <path d="M-70 -34 q4 12 -2 24 M-104 -31 q4 12 -2 25 M-138 -28 q4 12 -2 25 M-172 -24 q4 10 -2 22 M-204 -21 q4 8 0 18 M-232 -26 q6 8 4 18" stroke="${c.bl}" stroke-width="3" fill="none" stroke-linecap="round"/>
   <path d="M-36 -128 C-96 -132,-158 -112,-198 -74 C-214 -58,-230 -52,-246 -66 L-250 -40 C-230 -34,-212 -42,-196 -56 C-158 -90,-100 -106,-36 -104 Z" fill="${c.deep}" opacity=".28"/>
@@ -563,7 +564,6 @@ Object.assign(D[0],{H:[52,-262],hand:[140,-134],
   // dos
   s+=orns(pf,t,far(back),t.bs,t.ss,0)+orns(pl,t,back,t.bs,t.ss);
   // membres du fond
-  s+=`<g transform="translate(-56,-6)">${ol(LEGP,c.dark)}${toes('#cfc7b0')}<path d="M-22 -74 C-26 -116,10 -132,44 -124 C10 -110,0 -70,10 -30 L-2 -30 C-14 -42,-20 -58,-22 -74 Z" fill="${c.deep}" opacity=".4"/></g>`;
   s+=`<g transform="translate(66,-184) rotate(${f(aa*.45+8)})">${ol(ARMP,c.dark)}${claws('#cfc7b0')}</g>`;
   // torse
   let bl='',hl='';for(let y=-214;y<-24;y+=24){bl+=`<path d="M14 ${y} Q66 ${y+15} 118 ${y}"/>`;hl+=`<path d="M22 ${y+6} Q66 ${y+20} 110 ${y+6}"/>`}
@@ -584,7 +584,7 @@ Object.assign(D[0],{H:[52,-262],hand:[140,-134],
   <path d="M8 -58 C28 -40,56 -42,74 -58" stroke="${c.deep}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/><path d="M86 -4 q2 -12 12 -16 M72 -2 q0 -8 6 -12" stroke="${L}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".6"/>
   <ellipse cx="34" cy="-100" rx="20" ry="9" fill="#fff" opacity=".22" transform="rotate(-14 34 -100)"/><path class="ol" d="${LEGP}" fill="none"/>${toes(IV)}</g>`;
   // bras avant (pivot à l'épaule)
-  s+=`<g transform="translate(42,-178) rotate(${aa})"><clipPath id="${G('ca')}"><path d="${ARMP}"/></clipPath>`+(t.held&&!aa?`<g transform="translate(96,46) rotate(-24)">${car(0,0,'#ff5a5a',1,1.25)}</g>`:'')+`${ol(ARMP,gb)}<g clip-path="url(#${G('ca')})"><path d="M-20 14 C10 30,50 44,96 56 L96 70 L-20 40 Z" fill="${c.deep}" opacity=".32"/>${marks([[4,-6],[24,2],[44,14]],c.deep,.4)}</g>
+  t.front=`<g transform="translate(42,-178) rotate(${aa})"><clipPath id="${G('ca')}"><path d="${ARMP}"/></clipPath>`+(t.held&&!aa?`<g transform="translate(96,46) rotate(-24)">${car(0,0,'#ff5a5a',1,1.25)}</g>`:'')+`${ol(ARMP,gb)}<g clip-path="url(#${G('ca')})"><path d="M-20 14 C10 30,50 44,96 56 L96 70 L-20 40 Z" fill="${c.deep}" opacity=".32"/>${marks([[4,-6],[24,2],[44,14]],c.deep,.4)}</g>
   <path d="M-4 -14 C12 -20,32 -12,46 0" stroke="${c.hi}" stroke-width="5" fill="none" opacity=".6" stroke-linecap="round"/><path d="M40 6 q8 10 4 22" stroke="${c.deep}" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"/><path class="ol" d="${ARMP}" fill="none"/>${claws(IV)}</g>`;
   return s},
  head(t){const{c,gb,p,G,fl}=t,baby=t.k=='bebe',M=GMOOD[t.mood]||GMOOD.content;
