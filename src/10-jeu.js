@@ -31,6 +31,7 @@ function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&
   if(s.care==null)s.care=50;
   if(s.dayK==null)s.dayK=-1;
   if(s.dayXp==null)s.dayXp=0;
+  if(!s.best)s.best={catch:0};
   if(!s.city||!s.city.pv||!(s.city.niveau>=1))s.city={niveau:1,pv:{}};
   return s}}catch(e){}return null}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -111,7 +112,7 @@ function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.s
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
 function refuse(t){pop(t);react('no')}
-function feed(i,src){const k=S.stage,fo=FOODS[k];if(busy())return false;
+function feed(i,src){const k=S.stage,fo=FOODS[k];if(mini||busy())return false;
  if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');done();return true}
  if(S.asleep){pop('ZZZ…');return false}
  if(i==null){const w=need();i=fo.findIndex(m=>m[0]==w);if(i<0)i=Math.floor(Math.random()*fo.length)}
@@ -119,8 +120,7 @@ function feed(i,src){const k=S.stage,fo=FOODS[k];if(busy())return false;
  const m=fo[i],wanted=need()==m[0];fly(m[0],src&&src[0],src&&src[1]);
  setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
   react('chomp');pop(rnd(MIAM[k]));done()},430);return true}
-function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');
- S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);gain(2+idx()*2);react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
+function play(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');startCatch()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
 const HIT={ado:1,adulte:3,titan:8}; // dégâts par coup

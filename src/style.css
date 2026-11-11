@@ -108,6 +108,12 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
 @keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 /* jeu */
 svg[data-s=titan] [data-b]{cursor:pointer}
+.mg{position:absolute;left:0;right:0;top:0;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize}
+.mg[hidden]{display:none}
+.mg>svg{display:block;width:100%;height:100%}
+.mgskip{position:absolute;right:14px;bottom:12px;font-size:16px;padding:4px 18px}
+.mgact.chomp{animation:chomp .35s ease-in-out}
+.mgact.no{animation:no .35s ease-in-out}
 .capm{display:inline-block;vertical-align:middle;margin-right:6px}
 .capm[hidden]{display:none}
 .capm svg{width:22px;height:22px;display:block}
