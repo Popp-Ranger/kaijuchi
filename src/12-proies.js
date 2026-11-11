@@ -22,14 +22,14 @@ const MV={
   sp:()=>`<path class="o" d="M-104 -10 L104 -10 L86 8 L-86 8 Z" fill="#8a84a3"/><g transform="translate(-88,-8)">${IC.district[1]}</g>`}
 };
 // population par stade : [type, nombre] (douze objets mobiles au plus)
-const POP={bebe:[['butterfly',3],['ladybug',2],['apple',2],['fish',1]],ado:[['cow',2],['car',3],['bus',1],['walker',2]],
- adulte:[['boat',2],['heli',2],['crowd',2],['bus',2],['car',3]],titan:[['cargo',2],['district',1],['car',3],['bus',1],['boat',2],['heli',1]]};
-const MAXMV=12,EDGE=170;
+const POP={bebe:[['butterfly',2],['ladybug',1],['apple',1],['fish',1]],ado:[['cow',1],['car',2],['bus',1],['walker',1]],
+ adulte:[['boat',1],['heli',1],['crowd',2],['bus',1],['car',2]],titan:[['cargo',1],['district',1],['car',2],['bus',1],['boat',1],['heli',1]]};
+const MAXMV=8,EDGE=170;
 let PR=[],preyStage=null,preyRaf=0,preyT=0,pid=0;
 
 function spawn(type,edge){if(PR.filter(o=>!o.gone).length>=MAXMV)return null;
  const M=MV[type],z=ST[preyStage].z,hw=500/z,o={id:++pid,type,f:M.f,tm:Math.random()*9,ph:Math.random()*6.28,rot:0,gone:false};
- let ln=M.lane?M.lane():[M.y?M.y():0,rnd([-1,1])];o.y=ln[0];o.dir=ln[1];o.sc=M.sc?M.sc(o):1;o.cy=M.cy*o.sc;o.r=M.r*o.sc;o.y0=o.y;o.v=(M.v||0)/z;
+ let ln=M.lane?M.lane():[M.y?M.y():0,rnd([-1,1])];o.y=ln[0];o.dir=ln[1];o.sc=(M.sc?M.sc(o):1)*(M.f?.25:1);o.cy=M.cy*o.sc;o.r=M.r*o.sc;o.y0=o.y;o.v=(M.v||0)/z;
  o.live=!!M.f&&FOODS[preyStage].some(m=>m[0]==M.f); // seules les proies du stade sont cliquables
  const hit=Math.max(o.r,23/z); // zone de clic : au moins 44 px à l'écran, quel que soit le zoom
  if(M.m=='wrap'){const lim=hw+EDGE+o.r;o.lim=lim;o.x=edge?-o.dir*lim:(Math.random()*2-1)*hw}
