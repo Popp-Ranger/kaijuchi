@@ -1,7 +1,7 @@
 /* ---------- rendu ---------- */
-function mon(d,k,u,full,o={}){const p=ST[k],c=d.c,bs=p.bs,hs=p.hs,G=n=>n+d.id+k+u;
+function mon(d,k,u,full,o={}){const p=ST[k],fm=o.form&&o.form!="commune"&&typeof formPal=="function"?o.form:"",c=fm?formPal(d.c,fm):d.c,bs=p.bs,bw=fm=="glouton"?bs*1.13:bs,hs=p.hs,G=n=>n+d.id+k+u;
  const t={p,c,G,gb:`url(#${G('gb')})`,gs:`url(#${G('gs')})`,fl:`url(#${G('fl')})`,ss:p.ss,bs,hs,glow:p.glow||d.glow};
- t.k=k;t.mood=o.mood||"content";t.pose=o.pose||"debout";
+ t.k=k;t.mood=o.mood||"content";t.pose=o.pose||"debout";t.form=fm;
  t.held=p.hold&&full?`<g transform="translate(${d.hand}) rotate(-24)">${car(0,0,'#ff5a5a',1,1.25)}</g>`:'';
  const bm=d.bm||[0,0],beam=p.beam&&full?`<g transform="translate(${bm})"><g class="beam"><path d="M90 16 L640 110 L600 250 L90 36 Z" fill="url(#${G('gbm')})" filter="${t.fl}"/><path d="M92 20 L620 150 L604 208 L92 32 Z" fill="url(#${G('gbm')})"/><path d="M94 23 L560 160 L556 178 L94 29 Z" fill="#fff" opacity=".9"/></g></g>`:'';
  const SHELL='M-66 -38 L-52 -60 L-36 -42 L-20 -66 L-2 -46 L16 -68 L34 -44 L50 -62 L66 -38 C70 -150,-70 -150,-66 -38 Z';
@@ -12,8 +12,8 @@ function mon(d,k,u,full,o={}){const p=ST[k],c=d.c,bs=p.bs,hs=p.hs,G=n=>n+d.id+k+
  <radialGradient id="${G('ge')}" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="${c.i1}"/><stop offset="1" stop-color="${c.i2}"/></radialGradient>
  <linearGradient id="${G('gbm')}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff"/><stop offset=".25" stop-color="${c.glow}"/><stop offset="1" stop-color="${c.sp2}" stop-opacity="0"/></linearGradient>
  <filter id="${G('fl')}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7"/></filter></defs>`;
- s+=`<ellipse cx="-14" cy="3" rx="${f((d.sh||160)*bs)}" ry="${f(15*bs)}" fill="${L}" opacity=".24"/><g class="breath"><g transform="scale(${bs})" style="--lw:${f2(1/bs)}">${d.body(t)}</g>`;
- s+=`<g transform="translate(${f(d.H[0]*bs)},${f(d.H[1]*bs-(1-bs)*(d.lift||0))}) scale(${hs})" style="--lw:${f2(1/hs)}"><g class="nod">${beam}${d.head(t)}${hat}</g></g>${t.front?`<g transform="scale(${bs})" style="--lw:${f2(1/bs)}">${t.front}</g>`:""}</g>`;
+ s+=`<ellipse cx="-14" cy="3" rx="${f((d.sh||160)*bs)}" ry="${f(15*bs)}" fill="${L}" opacity=".24"/><g class="breath"><g transform="scale(${f2(bw)},${bs})" style="--lw:${f2(1/bs)}">${d.body(t)}</g>`;
+ s+=`<g transform="translate(${f(d.H[0]*bs)},${f(d.H[1]*bs-(1-bs)*(d.lift||0))}) scale(${hs})" style="--lw:${f2(1/hs)}"><g class="nod">${beam}${fm?formUnder(t,d):""}${d.head(t)}${fm?formOver(t,d):""}${hat}</g></g>${t.front?`<g transform="scale(${f2(bw)},${bs})" style="--lw:${f2(1/bs)}">${t.front}</g>`:""}</g>`;
  return s}
 function egg(u,d){const e=d.c,ec=[e.body,e.sp2,e.belly2,e.hi,e.sp2,e.sp,e.body];return `<defs><radialGradient id="gegg${u}" cx=".38" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#fff3d6"/><stop offset="1" stop-color="#f3c98a"/></radialGradient>
 <clipPath id="cegg${u}"><path d="M0 -206 C52 -206,84 -132,84 -82 C84 -34,48 -6,0 -6 C-48 -6,-84 -34,-84 -82 C-84 -132,-52 -206,0 -206 Z"/></clipPath></defs>

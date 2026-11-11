@@ -9,6 +9,7 @@ function planche(d,old){let h=`<h2>Avant / après <small>le même monstre au sta
  h+=`<h2>Les expressions <small>choisies par le jeu d'après les jauges</small></h2><div class="grid g4">${Object.keys(MOODN).map(m=>cell(d,'adulte',{mood:m},MOODN[m],d.cb)).join('')}</div>`;
  h+=`<h2>Les expressions du bébé</h2><div class="grid g4">${Object.keys(MOODN).map(m=>cell(d,'bebe',{mood:m},MOODN[m])).join('')}</div>`;
  h+=`<h2>Les poses</h2><div class="grid g3">${Object.keys(POSEN).map(q=>cell(d,'adulte',{pose:q,mood:q=='frappe'?'colere':q=='mange'?'miam':'content'},POSEN[q],d.cb)).join('')}</div>`;
+ h+=`<h2>Les formes adultes <small>selon les soins reçus avant l'âge adulte</small></h2><div class="grid g4">${Object.keys(FORMN).map(q=>cell(d,"adulte",{form:q},FORMN[q],d.cb)).join("")}</div><h2>Les mêmes formes au stade titan</h2><div class="grid g4">${Object.keys(FORMN).map(q=>cell(d,"titan",{form:q},FORMN[q])).join("")}</div>`;
  return h}
 const tabs=document.getElementById('tabs'),out=document.getElementById('planche');
 function showMon(i){out.innerHTML=planche(D[i],V1[i]);tabs.querySelectorAll('button').forEach((b,j)=>b.classList.toggle('on',j==i))}
