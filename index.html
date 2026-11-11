@@ -121,6 +121,17 @@ svg[data-s=titan] [data-b]{cursor:pointer}
 .mg[hidden]{display:none}
 .mg>svg{display:block;width:100%;height:100%}
 .mgskip{position:absolute;right:14px;bottom:12px;font-size:16px;padding:4px 18px}
+.st{position:absolute;inset:0;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.st[hidden]{display:none}
+#st-skip{bottom:96px}
+.stp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(70%,560px);background:var(--cream);border:4px solid var(--ink);border-radius:22px;padding:8px 14px 12px;box-shadow:0 5px 0 var(--ink)}
+.stpips{display:flex;justify-content:center;gap:10px;margin-bottom:6px}
+.stpips i{width:18px;height:18px;border-radius:50%;border:3px solid var(--ink);background:#fff}
+.stpips i.crit{background:#ffd23f}.stpips i.ok{background:#5ed36a}.stpips i.miss{background:#9a94b3}
+.stbar{position:relative;height:34px;border:4px solid var(--ink);border-radius:20px;background:#ff8a7a;overflow:hidden}
+.stbar i{position:absolute;top:0;bottom:0}
+.sty{background:#ffd23f}.stg{background:#5ed36a;border-left:3px solid var(--ink);border-right:3px solid var(--ink)}
+.stc{position:absolute;top:0;bottom:0;width:10px;margin-left:-5px;background:#fff;border:3px solid var(--ink);border-radius:5px}
 .mgact.chomp{animation:chomp .35s ease-in-out}
 .mgact.no{animation:no .35s ease-in-out}
 .capm{display:inline-block;vertical-align:middle;margin-right:6px}
@@ -176,6 +187,7 @@ svg[data-s=titan] [data-b]{cursor:pointer}
       <div class="gauges" id="gauges"></div>
       <svg id="scene" viewBox="0 0 1000 600" data-s="oeuf"></svg>
       <div class="mg" id="mg" hidden><svg id="mgs" viewBox="0 0 1000 600"></svg><button class="chip mini mgskip" id="mg-skip" type="button">Passer</button></div>
+      <div class="st" id="st" hidden><div class="stp"><div class="stpips" id="st-p"></div><div class="stbar"><i class="sty" id="st-y"></i><i class="stg" id="st-g"></i><b class="stc" id="st-c"></b></div></div><button class="chip mini mgskip" id="st-skip" type="button">Passer</button></div>
     </div>
     <div class="row">
       <div class="evo"><div class="t"><span>Évolution</span><span><span class="capm" id="e-cap" hidden title="Assez joué pour aujourd'hui : plus de points avant demain"></span><span id="e-next"></span></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
@@ -817,10 +829,9 @@ function play(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.ene
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
 const HIT={ado:1,adulte:3,titan:8}; // dégâts par coup
-function destroy(){if(idx()<2||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
+function destroy(){if(idx()<2||mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
  if(!nearest())return refuse('HMPF…'); // rien à détruire : la ville est rasée, la suivante attend un stade plus grand
- S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);react('jump');
- strikeCity(HIT[S.stage]);done()}
+ startStrike()}
 const DO={feed:()=>feed(null),play,sleep,wash,destroy};
 
 /* ---------- la ville destructible : état, dégâts, niveaux ---------- */
@@ -968,6 +979,38 @@ function catchEnd(skip){if(!CG||CG.done)return;CG.done=true;cancelAnimationFrame
  if(skip)return finish();
  CG.items.innerHTML='';CG.fx.innerHTML=`<g transform="translate(500,270) rotate(-7)"><g class="popin"><polygon points="${star(0,0,150,96,14)}" fill="#ffe14d" stroke="${L}" stroke-width="5" stroke-linejoin="round"/><polygon points="${star(0,0,124,86,14)}" fill="#fff6b0"/><text x="0" y="22" text-anchor="middle" font-size="72" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="8" paint-order="stroke" stroke-linejoin="round">${sc}</text>${rec?`<text x="0" y="-52" text-anchor="middle" font-size="30" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="6" paint-order="stroke">RECORD !</text>`:''}</g></g>`;
  setTimeout(finish,1700)}
+/* ---------- mini-jeu « Détruire » : frappe au bon moment ---------- */
+// Un curseur va et vient sur une barre : vert = coup critique (dégâts x 3), jaune = coup normal, ailleurs = raté.
+// Trois frappes par action, la zone verte rétrécit à chaque frappe. Coût de la série : énergie -15.
+const STRIKE_G=[.15,.10,.06],STRIKE_Y=[.42,.34,.27],STRIKE_N=3;
+let SG=null;
+function strikeZones(){const n=SG.n,c=.3+Math.random()*.4;SG.c=c;SG.gw=STRIKE_G[n];SG.yw=STRIKE_Y[n];
+ const y=$('st-y'),g=$('st-g');y.style.left=((c-SG.yw/2)*100)+'%';y.style.width=(SG.yw*100)+'%';g.style.left=((c-SG.gw/2)*100)+'%';g.style.width=(SG.gw*100)+'%'}
+function startStrike(){if(mini)return;mini=true;
+ SG={n:0,p:0,dir:1,wait:.4,last:performance.now(),raf:0,res:[],done:false};
+ $('st-p').innerHTML='<i></i><i></i><i></i>';strikeZones();$('st').hidden=false;
+ const hit=e=>{if(e.target.closest('button'))return;e.preventDefault();strikeTap()};
+ const key=e=>{if(e.key==' '||e.key=='Enter'){e.preventDefault();strikeTap()}};
+ SG.hit=hit;SG.key=key;$('st').addEventListener('pointerdown',hit);document.addEventListener('keydown',key);
+ $('st-skip').onclick=()=>strikeEnd();
+ SG.raf=requestAnimationFrame(strikeTick)}
+function strikeTick(now){if(!SG||SG.done)return;SG.raf=requestAnimationFrame(strikeTick);const dt=Math.min(.05,(now-SG.last)/1000);SG.last=now;
+ if(SG.wait>0)SG.wait-=dt;
+ SG.p+=SG.dir*(1.1+.25*SG.n)*dt;if(SG.p>=1){SG.p=1;SG.dir=-1}else if(SG.p<=0){SG.p=0;SG.dir=1}
+ $('st-c').style.left=(SG.p*100)+'%'}
+function strikeTap(){if(!SG||SG.done||SG.wait>0)return;
+ const d=Math.abs(SG.p-SG.c),crit=d<=SG.gw/2,ok=d<=SG.yw/2,res=crit?'crit':ok?'ok':'miss',dmg=HIT[S.stage];
+ SG.res.push(res);SG.wait=.5;SG.n++;
+ const pip=$('st-p').children[SG.n-1];if(pip)pip.className=res;
+ if(res=='miss'){pop('PFFF…');react('no')}
+ else{react('jump');strikeCity(crit?dmg*3:dmg,crit?'CRAAAC !':null)}
+ if(SG.n>=STRIKE_N||!nearest()){SG.done=true;cancelAnimationFrame(SG.raf);setTimeout(strikeEnd,700)}
+ else strikeZones()}
+// fin de la série : coût en énergie, retour à la scène
+function strikeEnd(){if(!SG)return;const g=SG;SG=null;g.done=true;cancelAnimationFrame(g.raf);
+ $('st').removeEventListener('pointerdown',g.hit);document.removeEventListener('keydown',g.key);$('st').hidden=true;mini=false;
+ if(g.n>0){S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12)}
+ done()}
 /* démarrage */
 function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}else stopPrey()}
 function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0,city:{niveau:1,pv:{}},best:{catch:0}};save();show();scrollTo(0,0)}

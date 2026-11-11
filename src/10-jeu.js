@@ -124,9 +124,8 @@ function play(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.ene
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
 const HIT={ado:1,adulte:3,titan:8}; // dégâts par coup
-function destroy(){if(idx()<2||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
+function destroy(){if(idx()<2||mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
  if(!nearest())return refuse('HMPF…'); // rien à détruire : la ville est rasée, la suivante attend un stade plus grand
- S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);react('jump');
- strikeCity(HIT[S.stage]);done()}
+ startStrike()}
 const DO={feed:()=>feed(null),play,sleep,wash,destroy};
 
