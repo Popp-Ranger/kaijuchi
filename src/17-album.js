@@ -10,7 +10,7 @@ const EXTRA=[];
 
 /* l'album est indépendant de la partie : clé propre, jamais effacée par « Nouvelle partie » */
 const AKEY='kaijuchi-album',FORMS=['commune','noble','sauvage','glouton'],FNAME={commune:'Commune',noble:'Noble',sauvage:'Sauvage',glouton:'Glouton'};
-const alForm=()=>S.form||'commune'; // S.form arrive avec le lot 7 ; sans lui, tout monstre est « commune »
+const alForm=()=>S.form||(ORDER.indexOf(S.stage)>=3&&typeof pickForm=='function'?(S.form=pickForm()):'')||'commune'; // S.form arrive avec le lot 7 ; sans lui, tout monstre est « commune »
 let AL=null;
 function alDefault(){return {v:1,mons:{},forms:{},prey:{},cities:0,maxLv:0,caught:0,best:{catch:0},days:{last:-1,streak:0,max:0},ach:{},freed:[]}}
 function alLoad(){const d=alDefault();try{const a=JSON.parse(localStorage.getItem(AKEY));if(a&&a.v==1){Object.keys(d).forEach(k=>{if(a[k]!=null)d[k]=a[k]});d.best=Object.assign({catch:0},a.best);d.days=Object.assign(d.days,a.days)}}catch(e){}return d}
