@@ -31,6 +31,7 @@ function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&
   if(s.care==null)s.care=50;
   if(s.dayK==null)s.dayK=-1;
   if(s.dayXp==null)s.dayXp=0;
+  if(!s.city||!s.city.pv||!(s.city.niveau>=1))s.city={niveau:1,pv:{}};
   return s}}catch(e){}return null}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
@@ -72,10 +73,10 @@ function hud(){const k=S.stage,p=ST[k],isEgg=k=='oeuf';
  GA.forEach(g=>{const v=isEgg?100:S[g[0]],e=$('g-'+g[0]);e.querySelector('.fill').style.width=v.toFixed(0)+'%';e.querySelector('.pc').textContent=isEgg?'':v.toFixed(0)+' %';e.classList.toggle('low',v<25)});
  const cs=$('c-stage');cs.textContent=CUR.name+' · '+p.n;cs.style.setProperty('--sc',p.col);
  $('c-day').innerHTML=`Jour <b>${Math.floor((Date.now()-S.born)/864e5)+1}</b>`;$('c-w').innerHTML=`Poids <b>${weight()}</b>`;
- $('c-d').innerHTML=`Dégâts <b>${S.dmg?S.dmg+(S.dmg>1?' immeubles':' immeuble'):'aucun'}</b>`;
+ $('c-d').innerHTML=`Ville <b>${lvInfo(S.city.niveau).n} ${ruined()}/${cityList().length}</b>`;
  $('e-next').textContent=NEED[k]&&S.xp>=NEED[k]&&ageLeft()>0?fmtLeft(ageLeft()):p.next;$('e-cap').hidden=!capped();$('e-bar').style.width=(NEED[k]?Math.min(100,100*S.xp/NEED[k]):100)+'%';
  $('scene').classList.toggle('sleep',!!S.asleep);
- document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<3));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
+ document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<2));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
  $('tray').classList.toggle('off',!!S.asleep);drawBubble()}
 function drawTray(){$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.stage].map((m,i)=>`<button class="food" data-i="${i}">${ic(m[0])}<div><div class="n">${m[1]}</div><div class="v">${S.stage=='oeuf'?(i?'+ humeur':'éclosion'):'+'+m[2]+' faim'}</div></div></button>`).join('')}
 function drawAlbum(){const n=idx();$('stages').innerHTML=ORDER.map((k,i)=>{const p=ST[k],ok=i<=n;return `<div class="card album${i==n?' on':''}${ok?'':' lock'}" style="--cb:${p.cb}"><svg viewBox="${p.vb}">${rays(p.vb)}<g class="sil">${k=='oeuf'?egg('c',CUR):mon(CUR,k,'c',false)}</g></svg><div class="n">${ok?p.n:'???'}</div><div class="a">${ok?p.short:'à découvrir'}</div></div>`}).join('')}
@@ -96,7 +97,7 @@ function fly(n){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3])
 function bubbles(){const p=ST[S.stage],h=p.m*p.bs*300,w=p.m*p.bs*170;for(let i=0;i<14;i++){const x=500+(Math.random()*2-1)*w,y=470-Math.random()*h,r=8+Math.random()*14;
  fx(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#fff" opacity=".65" stroke="#9fe0ff" stroke-width="3"/><circle cx="${f(x-r*.3)}" cy="${f(y-r*.3)}" r="${f(r*.25)}" fill="#fff"/>`,
   [{transform:'translateY(20px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.25},{transform:'translateY(-90px)',opacity:0}],700+Math.random()*600)}}
-function boom(){const x=600+Math.random()*320,y=300+Math.random()*130;
+function boom(x,y){if(x==null){x=600+Math.random()*320;y=300+Math.random()*130}
  fx(`<g transform="translate(${f(x)},${f(y)})"><polygon points="${star(0,0,70,34,11)}" fill="#fff" stroke="${L}" stroke-width="3"/><polygon points="${star(0,0,50,22,11)}" fill="#ffd23f"/><polygon points="${star(0,0,30,13,11)}" fill="#ff7a2e"/></g>`,
   [{opacity:1},{opacity:1,offset:.7},{opacity:0}],650);
  const sc=$('screen');sc.classList.remove('shake');sc.getBoundingClientRect();sc.classList.add('shake')}
@@ -104,7 +105,7 @@ function flash(){fx(`<rect width="1000" height="600" fill="#fff"/>`,[{opacity:1}
 
 /* actions */
 const busy=()=>Date.now()<lockT||(lockT=Date.now()+420,false);
-function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;S.since=Date.now();
+function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;S.since=Date.now();cityAdvance();
  if(k=='oeuf')Object.assign(S,{faim:60,humeur:80,energie:80,propre:100});else S.humeur=clamp(S.humeur+20);
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
@@ -121,17 +122,10 @@ function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<1
  S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);gain(2+idx()*2);react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
-function destroy(){if(idx()<3||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
- S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);gain(S.stage=='titan'?70:30);S.dmg++;react('jump');boom();pop(rnd(['BOUM !','CRAAAC !','BADABOUM !']));done()}
+const HIT={ado:1,adulte:3,titan:8}; // dégâts par coup
+function destroy(){if(idx()<2||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
+ if(!nearest())return refuse('HMPF…'); // rien à détruire : la ville est rasée, la suivante attend un stade plus grand
+ S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);react('jump');
+ strikeCity(HIT[S.stage]);done()}
 const DO={feed:()=>feed(null),play,sleep,wash,destroy};
 
-/* démarrage */
-function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];drawAll()}}
-function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0};save();show();scrollTo(0,0)}
-$('species').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)start(+c.dataset.i)});
-$('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S)feed(+c.dataset.i)});
-$('actions').addEventListener('click',e=>{const c=e.target.closest('.btn');if(c&&S&&S.stage!='oeuf')DO[c.dataset.a]()});
-$('b-new').addEventListener('click',()=>{if(confirm('Recommencer avec un nouvel œuf ? Ton monstre actuel sera perdu.')){try{localStorage.removeItem(KEY)}catch(e){}S=null;show()}});
-setInterval(()=>{if(!S)return;const now=Date.now();decay((now-S.t)/1000*DEBUG_SPEED);S.t=now;if(!evolve())hud();save()},1000);
-S=load();if(S){const gap=Date.now()-S.t;decay(gap/4000*DEBUG_SPEED,true);S.t=Date.now();if(gap>=6e5)visite()} // page fermée : le temps compte quatre fois moins, jamais sous 15
-show();

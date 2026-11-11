@@ -23,3 +23,31 @@ function ruin(x,w,h,c){let s=`<g transform="translate(${x},-46)"><path class="o"
 function fire(x,y,sc=1){return `<g transform="translate(${x},${y}) scale(${sc})"><circle class="smk" cx="0" cy="-34" r="13" fill="#6b6385"/><circle class="smk" style="animation-delay:-1.2s" cx="10" cy="-30" r="11" fill="#8a84a3"/><circle class="smk" style="animation-delay:-2.4s" cx="-10" cy="-30" r="10" fill="#57506f"/>
 <g class="flm"><path class="o3" d="M0 0 C-16 0,-18 -16,-9 -26 C-9 -18,-4 -16,-3 -20 C-4 -30,2 -38,7 -42 C5 -32,16 -26,15 -12 C14 -4,8 0,0 0 Z" fill="#ff7a2e"/><path d="M1 -2 C-8 -2,-9 -12,-3 -17 C-2 -12,2 -13,3 -22 C8 -16,10 -10,8 -6 C7 -3,4 -2,1 -2 Z" fill="#ffe14d"/></g></g>`}
 
+
+
+/* ---------- la ville : niveaux, immeubles, états ---------- */
+// st = indice du stade requis (2 ado, 3 adulte, 4 titan), N = immeubles, pv = points de vie, h = hauteurs, pal = palettes de PAL
+const LV=[null,
+ {n:'Hameau',st:2,N:6,pv:1,h:[95,150],pal:[1,6,3]},
+ {n:'Village',st:2,N:10,pv:2,h:[110,200],pal:[0,1,6,3]},
+ {n:'Petite ville',st:3,N:14,pv:4,h:[120,250],pal:[2,5,0,7,3]},
+ {n:'Port',st:3,N:16,pv:6,h:[130,290],pal:[5,6,3,1,0]},
+ {n:'Capitale',st:4,N:20,pv:10,h:[140,330],pal:[2,7,4,0,5,1]}];
+function lvInfo(l){if(l<=5)return LV[l];const n=l-5;
+ return {n:'Mégapole '+n,st:4,N:20,pv:Math.round(10*Math.pow(1.4,n)),h:[140,330],pal:[l%8,(l+2)%8,(l+4)%8,(l+5)%8,(l+7)%8]}}
+// les immeubles d'un niveau : {id,x,w,h,col,seed,pvMax}, toujours les mêmes pour un niveau donné
+const _cd={};
+function cityDefs(l){if(_cd[l])return _cd[l];const I=lvInfo(l),R=mb(700+l*97),step=Math.max(58,Math.min(130,1180/I.N)),out=[];let x=I.N<=10?-140:-216;
+ while(out.length<I.N){const w=Math.min(94,Math.round(step*(.62+R()*.3)));
+  if(l>=5&&x+w>330&&x<378){x=388;continue}
+  const h=Math.round(I.h[0]+R()*(I.h[1]-I.h[0])+(l>=3&&R()<.2?60:0));
+  out.push({id:'b'+out.length,x:Math.round(x),w,h,col:I.pal[Math.floor(R()*I.pal.length)],seed:Math.floor(R()*1e6),pvMax:I.pv});x+=step+R()*8}
+ return _cd[l]=out}
+const pvOf=(B,pvs)=>pvs&&pvs[B.id]!=null?pvs[B.id]:B.pvMax;
+function cracks(B){const R=mb(B.seed+5),w=B.w,h=B.h;let s=`<g transform="translate(${B.x},-46)" fill="none">`;
+ for(let k=0;k<3;k++){let x=w*(.18+.3*k)+R()*8,y=-h+4,d=`M${f(x)} ${f(y)}`;for(let j=0;j<5;j++){x+=(R()-.5)*16;y+=14+R()*18;d+=` L${f(x)} ${f(y)}`}s+=`<path class="o2" d="${d}"/>`}
+ return s+`<circle class="smk" cx="${f(w*.35)}" cy="${-h-6}" r="9" fill="#8a84a3"/><circle class="smk" style="animation-delay:-1.7s" cx="${f(w*.62)}" cy="${-h-6}" r="7" fill="#6b6385"/></g>`}
+// dessin d'un immeuble selon ses points de vie : intact, fissuré, ruine en flammes
+function bldSvg(B,pv){const c=PAL[B.col];
+ if(pv<=0)return ruin(B.x,B.w,B.h,c)+fire(B.x+B.w*.5,-46-B.h+38,.7+B.w/150);
+ return building(B.x,B.w,B.h,c,mb(B.seed))+(pv<B.pvMax?cracks(B):'')}

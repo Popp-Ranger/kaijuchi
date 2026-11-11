@@ -322,8 +322,36 @@ function ruin(x,w,h,c){let s=`<g transform="translate(${x},-46)"><path class="o"
 function fire(x,y,sc=1){return `<g transform="translate(${x},${y}) scale(${sc})"><circle class="smk" cx="0" cy="-34" r="13" fill="#6b6385"/><circle class="smk" style="animation-delay:-1.2s" cx="10" cy="-30" r="11" fill="#8a84a3"/><circle class="smk" style="animation-delay:-2.4s" cx="-10" cy="-30" r="10" fill="#57506f"/>
 <g class="flm"><path class="o3" d="M0 0 C-16 0,-18 -16,-9 -26 C-9 -18,-4 -16,-3 -20 C-4 -30,2 -38,7 -42 C5 -32,16 -26,15 -12 C14 -4,8 0,0 0 Z" fill="#ff7a2e"/><path d="M1 -2 C-8 -2,-9 -12,-3 -17 C-2 -12,2 -13,3 -22 C8 -16,10 -10,8 -6 C7 -3,4 -2,1 -2 Z" fill="#ffe14d"/></g></g>`}
 
+
+
+/* ---------- la ville : niveaux, immeubles, états ---------- */
+// st = indice du stade requis (2 ado, 3 adulte, 4 titan), N = immeubles, pv = points de vie, h = hauteurs, pal = palettes de PAL
+const LV=[null,
+ {n:'Hameau',st:2,N:6,pv:1,h:[95,150],pal:[1,6,3]},
+ {n:'Village',st:2,N:10,pv:2,h:[110,200],pal:[0,1,6,3]},
+ {n:'Petite ville',st:3,N:14,pv:4,h:[120,250],pal:[2,5,0,7,3]},
+ {n:'Port',st:3,N:16,pv:6,h:[130,290],pal:[5,6,3,1,0]},
+ {n:'Capitale',st:4,N:20,pv:10,h:[140,330],pal:[2,7,4,0,5,1]}];
+function lvInfo(l){if(l<=5)return LV[l];const n=l-5;
+ return {n:'Mégapole '+n,st:4,N:20,pv:Math.round(10*Math.pow(1.4,n)),h:[140,330],pal:[l%8,(l+2)%8,(l+4)%8,(l+5)%8,(l+7)%8]}}
+// les immeubles d'un niveau : {id,x,w,h,col,seed,pvMax}, toujours les mêmes pour un niveau donné
+const _cd={};
+function cityDefs(l){if(_cd[l])return _cd[l];const I=lvInfo(l),R=mb(700+l*97),step=Math.max(58,Math.min(130,1180/I.N)),out=[];let x=I.N<=10?-140:-216;
+ while(out.length<I.N){const w=Math.min(94,Math.round(step*(.62+R()*.3)));
+  if(l>=5&&x+w>330&&x<378){x=388;continue}
+  const h=Math.round(I.h[0]+R()*(I.h[1]-I.h[0])+(l>=3&&R()<.2?60:0));
+  out.push({id:'b'+out.length,x:Math.round(x),w,h,col:I.pal[Math.floor(R()*I.pal.length)],seed:Math.floor(R()*1e6),pvMax:I.pv});x+=step+R()*8}
+ return _cd[l]=out}
+const pvOf=(B,pvs)=>pvs&&pvs[B.id]!=null?pvs[B.id]:B.pvMax;
+function cracks(B){const R=mb(B.seed+5),w=B.w,h=B.h;let s=`<g transform="translate(${B.x},-46)" fill="none">`;
+ for(let k=0;k<3;k++){let x=w*(.18+.3*k)+R()*8,y=-h+4,d=`M${f(x)} ${f(y)}`;for(let j=0;j<5;j++){x+=(R()-.5)*16;y+=14+R()*18;d+=` L${f(x)} ${f(y)}`}s+=`<path class="o2" d="${d}"/>`}
+ return s+`<circle class="smk" cx="${f(w*.35)}" cy="${-h-6}" r="9" fill="#8a84a3"/><circle class="smk" style="animation-delay:-1.7s" cx="${f(w*.62)}" cy="${-h-6}" r="7" fill="#6b6385"/></g>`}
+// dessin d'un immeuble selon ses points de vie : intact, fissuré, ruine en flammes
+function bldSvg(B,pv){const c=PAL[B.col];
+ if(pv<=0)return ruin(B.x,B.w,B.h,c)+fire(B.x+B.w*.5,-46-B.h+38,.7+B.w/150);
+ return building(B.x,B.w,B.h,c,mb(B.seed))+(pv<B.pvMax?cracks(B):'')}
 /* ---------- le monde ---------- */
-function world(){const R=mb(11);let b='',fg='';
+function world(lv=1,pvs={}){const R=mb(11+lv*31);let b='',fg='';
  // sol, plage, mer
  b+=`<rect x="-360" y="-52" width="1500" height="362" fill="url(#gGrass)"/>`;
  for(let i=0;i<40;i++)b+=`<ellipse cx="${f(-250+R()*1500)}" cy="${f(10+R()*300)}" rx="${f(30+R()*50)}" ry="${f(5+R()*6)}" fill="#8fe06a" opacity=".5"/>`;
@@ -342,9 +370,8 @@ function world(){const R=mb(11);let b='',fg='';
  b+=lighthouse(-352,-50);
  // immeubles
  b+=ruin(-288,62,196,PAL[4]);
- let i=0;for(let x=-216;x<1070;){if(x>312&&x<372){b+=tower(352);x=388;continue}
-  const w=50+R()*44,h=Math.round(110+R()*200+(R()<.2?70:0));b+=building(x,w,h,PAL[(i*3+Math.floor(R()*3))%8],R);i++;x+=w+(R()<.3?16:1)}
- b+=wheel(840);
+ cityDefs(lv).forEach(B=>{b+=`<g data-b="${B.id}">${bldSvg(B,pvOf(B,pvs))}</g>`});if(lv>=5)b+=tower(352);
+ if(lv>=5)b+=wheel(840);
  // arbres, lampadaires, passants du trottoir
  for(let x=-270;x<1080;x+=70+R()*60)b+=tree(x,-42,.85+R()*.3,Math.floor(R()*3));
  for(let x=-240;x<1080;x+=150)b+=lamp(x,-41);
@@ -354,11 +381,11 @@ function world(){const R=mb(11);let b='',fg='';
  b+=car(-262,-29,'#4db8ff',-1)+car(196,-29,'#ffd23f',-1)+bus(380,-29,'#ff5a5a',-1)+car(560,-29,'#b58cff',-1)+car(720,-29,'#5ed36a',-1)+car(905,-29,'#ff8fc0',-1);
  b+=car(-150,-15,'#ff9a3c',1)+car(270,-15,'#ff5a5a',1)+car(450,-15,'#fff',1)+car(640,-15,'#4db8ff',1)+bus(800,-15,'#ffd23f',1)+car(980,-15,'#5ed36a',1);
  // bateaux
- b+=cargo(-640,-34,1,3)+cargo(-930,-40,.7,8)+sail(-430,-20,1,'#ff8fc0')+sail(-540,70,1.2,'#5ed36a')+sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
+ b+=cargo(-640,-34,1,3)+cargo(-930,-40,.7,8)+sail(-430,-20,1,'#ff8fc0')+sail(-540,70,1.2,'#5ed36a');if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
  // hélicoptères
  b+=heli(262,-338,1,'#ff9320',0)+heli(-700,-330,1.5,'#4db8ff',.6)+heli(720,-700,1.5,'#ff5a8a',1.1);
  // dégâts
- b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g><g class="prop p-titan">${fire(900,-190,2.6)}${fire(980,-150,2.2)}${fire(640,-170,2)}</g>`;
+ b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g>`;
  // passants sur l'herbe
  const pb=[],pf=[];for(let k=0;k<22;k++){const x=150+R()*420,y=-8+R()*22;(y<0?pb:pf).push(person(x,y,k+2,1))}
  for(let k=0;k<8;k++){const x=-250-R()*40,y=2+R()*14;pf.push(person(x,y,k,-1))}
@@ -699,6 +726,7 @@ function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&
   if(s.care==null)s.care=50;
   if(s.dayK==null)s.dayK=-1;
   if(s.dayXp==null)s.dayXp=0;
+  if(!s.city||!s.city.pv||!(s.city.niveau>=1))s.city={niveau:1,pv:{}};
   return s}}catch(e){}return null}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
@@ -740,10 +768,10 @@ function hud(){const k=S.stage,p=ST[k],isEgg=k=='oeuf';
  GA.forEach(g=>{const v=isEgg?100:S[g[0]],e=$('g-'+g[0]);e.querySelector('.fill').style.width=v.toFixed(0)+'%';e.querySelector('.pc').textContent=isEgg?'':v.toFixed(0)+' %';e.classList.toggle('low',v<25)});
  const cs=$('c-stage');cs.textContent=CUR.name+' · '+p.n;cs.style.setProperty('--sc',p.col);
  $('c-day').innerHTML=`Jour <b>${Math.floor((Date.now()-S.born)/864e5)+1}</b>`;$('c-w').innerHTML=`Poids <b>${weight()}</b>`;
- $('c-d').innerHTML=`Dégâts <b>${S.dmg?S.dmg+(S.dmg>1?' immeubles':' immeuble'):'aucun'}</b>`;
+ $('c-d').innerHTML=`Ville <b>${lvInfo(S.city.niveau).n} ${ruined()}/${cityList().length}</b>`;
  $('e-next').textContent=NEED[k]&&S.xp>=NEED[k]&&ageLeft()>0?fmtLeft(ageLeft()):p.next;$('e-cap').hidden=!capped();$('e-bar').style.width=(NEED[k]?Math.min(100,100*S.xp/NEED[k]):100)+'%';
  $('scene').classList.toggle('sleep',!!S.asleep);
- document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<3));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
+ document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<2));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
  $('tray').classList.toggle('off',!!S.asleep);drawBubble()}
 function drawTray(){$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.stage].map((m,i)=>`<button class="food" data-i="${i}">${ic(m[0])}<div><div class="n">${m[1]}</div><div class="v">${S.stage=='oeuf'?(i?'+ humeur':'éclosion'):'+'+m[2]+' faim'}</div></div></button>`).join('')}
 function drawAlbum(){const n=idx();$('stages').innerHTML=ORDER.map((k,i)=>{const p=ST[k],ok=i<=n;return `<div class="card album${i==n?' on':''}${ok?'':' lock'}" style="--cb:${p.cb}"><svg viewBox="${p.vb}">${rays(p.vb)}<g class="sil">${k=='oeuf'?egg('c',CUR):mon(CUR,k,'c',false)}</g></svg><div class="n">${ok?p.n:'???'}</div><div class="a">${ok?p.short:'à découvrir'}</div></div>`}).join('')}
@@ -764,7 +792,7 @@ function fly(n){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3])
 function bubbles(){const p=ST[S.stage],h=p.m*p.bs*300,w=p.m*p.bs*170;for(let i=0;i<14;i++){const x=500+(Math.random()*2-1)*w,y=470-Math.random()*h,r=8+Math.random()*14;
  fx(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#fff" opacity=".65" stroke="#9fe0ff" stroke-width="3"/><circle cx="${f(x-r*.3)}" cy="${f(y-r*.3)}" r="${f(r*.25)}" fill="#fff"/>`,
   [{transform:'translateY(20px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.25},{transform:'translateY(-90px)',opacity:0}],700+Math.random()*600)}}
-function boom(){const x=600+Math.random()*320,y=300+Math.random()*130;
+function boom(x,y){if(x==null){x=600+Math.random()*320;y=300+Math.random()*130}
  fx(`<g transform="translate(${f(x)},${f(y)})"><polygon points="${star(0,0,70,34,11)}" fill="#fff" stroke="${L}" stroke-width="3"/><polygon points="${star(0,0,50,22,11)}" fill="#ffd23f"/><polygon points="${star(0,0,30,13,11)}" fill="#ff7a2e"/></g>`,
   [{opacity:1},{opacity:1,offset:.7},{opacity:0}],650);
  const sc=$('screen');sc.classList.remove('shake');sc.getBoundingClientRect();sc.classList.add('shake')}
@@ -772,7 +800,7 @@ function flash(){fx(`<rect width="1000" height="600" fill="#fff"/>`,[{opacity:1}
 
 /* actions */
 const busy=()=>Date.now()<lockT||(lockT=Date.now()+420,false);
-function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;S.since=Date.now();
+function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;S.since=Date.now();cityAdvance();
  if(k=='oeuf')Object.assign(S,{faim:60,humeur:80,energie:80,propre:100});else S.humeur=clamp(S.humeur+20);
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
@@ -789,13 +817,38 @@ function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<1
  S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);gain(2+idx()*2);react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
-function destroy(){if(idx()<3||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
- S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);gain(S.stage=='titan'?70:30);S.dmg++;react('jump');boom();pop(rnd(['BOUM !','CRAAAC !','BADABOUM !']));done()}
+const HIT={ado:1,adulte:3,titan:8}; // dégâts par coup
+function destroy(){if(idx()<2||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
+ if(!nearest())return refuse('HMPF…'); // rien à détruire : la ville est rasée, la suivante attend un stade plus grand
+ S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);react('jump');
+ strikeCity(HIT[S.stage]);done()}
 const DO={feed:()=>feed(null),play,sleep,wash,destroy};
 
+/* ---------- la ville destructible : état, dégâts, niveaux ---------- */
+const cityList=()=>cityDefs(S.city.niveau);
+const pvNow=B=>pvOf(B,S.city.pv);
+const standing=()=>cityList().filter(B=>pvNow(B)>0);
+const ruined=()=>cityList().length-standing().length;
+// l'immeuble debout le plus proche du monstre (qui se tient en x = 0)
+function nearest(){let best=null,bd=1e9;cityList().forEach(B=>{if(pvNow(B)<=0)return;const d=Math.abs(B.x+B.w/2);if(d<bd){bd=d;best=B}});return best}
+// la ville entière est redessinée seulement quand le niveau change ; un immeuble se redessine seul dans son <g data-b>
+function buildWorld(){const [b,fg]=world(S.city.niveau,S.city.pv);W.innerHTML=b;WF.innerHTML=fg}
+function redrawB(B){const g=W.querySelector(`[data-b="${B.id}"]`);if(g)g.innerHTML=bldSvg(B,pvNow(B))}
+// position de l'immeuble à l'écran (repère 1000 x 600), pour placer l'éclat
+function bScreen(B){const z=zCur||1;return [Math.max(70,Math.min(930,500+z*(B.x+B.w/2))),Math.max(70,Math.min(530,470+z*(-46-B.h/2)))]}
+// enlève des points de vie ; renvoie vrai si l'immeuble tombe en ruine
+function hitB(B,dmg){S.city.pv[B.id]=Math.max(0,pvNow(B)-dmg);redrawB(B);
+ if(S.city.pv[B.id]>0)return false;S.dmg++;gain(8+B.pvMax*5);return true}
+// un coup sur l'immeuble le plus proche ; gère l'éclat, le mot et la fin de ville
+function strikeCity(dmg,word){const B=nearest();if(!B)return null;const [x,y]=bScreen(B),dead=hitB(B,dmg);boom(x,y);
+ pop(word||(dead?rnd(['BOUM !','CRAAAC !']):'CRAC !'));if(dead&&!standing().length)cityCleared();return {B,dead}}
+function cityCleared(){const l=S.city.niveau;gain(40+20*l);S.humeur=clamp(S.humeur+25);pop('BADABOUM !');flash();cityAdvance()}
+// passe à la ville suivante quand tout est rasé et que le stade du monstre le permet
+function cityAdvance(){if(standing().length)return false;const n=S.city.niveau+1;if(idx()<lvInfo(n).st)return false;
+ S.city={niveau:n,pv:{}};buildWorld();return true}
 /* démarrage */
-function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];drawAll()}}
-function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0};save();show();scrollTo(0,0)}
+function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}}
+function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0,city:{niveau:1,pv:{}}};save();show();scrollTo(0,0)}
 $('species').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)start(+c.dataset.i)});
 $('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S)feed(+c.dataset.i)});
 $('actions').addEventListener('click',e=>{const c=e.target.closest('.btn');if(c&&S&&S.stage!='oeuf')DO[c.dataset.a]()});
