@@ -116,6 +116,9 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
 .wig{animation:wig 1.8s ease-in-out infinite alternate;transform-origin:0 0}
 @keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 /* jeu */
+.capm{display:inline-block;vertical-align:middle;margin-right:6px}
+.capm[hidden]{display:none}
+.capm svg{width:22px;height:22px;display:block}
 .app.home #game,.app.home .top .chip{display:none}
 .app:not(.home) #home{display:none}
 #home .card .n{font-size:24px}
@@ -167,7 +170,7 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
       <svg id="scene" viewBox="0 0 1000 600" data-s="oeuf"></svg>
     </div>
     <div class="row">
-      <div class="evo"><div class="t"><span>Évolution</span><span id="e-next"></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
+      <div class="evo"><div class="t"><span>Évolution</span><span><span class="capm" id="e-cap" hidden title="Assez joué pour aujourd'hui : plus de points avant demain"></span><span id="e-next"></span></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
       <div class="tray" id="tray"></div>
     </div>
     <div class="actions" id="actions"></div>
@@ -672,11 +675,16 @@ const FOODS={
  ado:[['cow','Vache',24,14],['tree','Arbre',16,9],['car','Voiture',30,18],['lamp','Lampadaire',10,6]],
  adulte:[['boat','Bateau',26,32],['heli','Hélicoptère',20,26],['crowd','Foule ×10',14,18],['bus','Bus',32,40]],
  titan:[['building','Immeuble',22,60],['cargo','Cargo',28,80],['district','Quartier',40,150]]};
-const NEED={oeuf:60,bebe:80,ado:260,adulte:700,titan:0};
+// points nécessaires pour quitter le stade, durée minimale (en jours) dans le stade, plafond de points par jour
+const NEED={oeuf:60,bebe:150,ado:600,adulte:2000,titan:0};
+const MINAGE={oeuf:0,bebe:1,ado:3,adulte:6,titan:0};
+const CAP={bebe:80,ado:220,adulte:400};
+const DAYMS=864e5,DEBUG_SPEED=1; // DEBUG_SPEED multiplie l'écoulement du temps (tests uniquement)
 const BASEW={oeuf:2,bebe:12,ado:900,adulte:60000,titan:2e7};
 const MIAM={bebe:['MIAM !','GLOUPS !','SLURP !'],ado:['SCRONCH !','CROC !','MIAM !'],adulte:['CROUNCH !','GLOUPS !','SCRATCH !'],titan:['GRAOUUU !','CROUNCH !','BROUM !']};
 const BUB={oeuf:[660,300],bebe:[650,255],ado:[690,190],adulte:[285,160],titan:[180,330]};
 ['moon','soap','ball'].forEach(n=>IC[n]=['0 0 48 48',UI[n]]);
+$('e-cap').innerHTML=ui('moon');
 const GA=[['faim','meat','Faim','#ffb199','#ff5f3d'],['humeur','heart','Humeur','#ff9ecb','#ff4f8b'],['energie','bolt','Énergie','#ffe98a','#ffb800'],['propre','drop','Propreté','#9fe0ff','#2f9cf0']];
 $('gauges').innerHTML=GA.map(g=>`<div class="gauge" id="g-${g[0]}"><div class="ic">${ui(g[1])}</div><div class="trk"><div class="fill" style="width:0%;--g1:${g[3]};--g2:${g[4]}"></div><div class="lbl"><span>${g[2]}</span><span class="pc"></span></div></div></div>`).join('');
 const AC=[['feed','meat','Nourrir','#ffb36b','#f2681f'],['play','ball','Jouer','#8be08a','#2fa84f'],['sleep','moon','Dormir','#9d8cff','#5a45d6'],['wash','soap','Laver','#7fd4ff','#1f8fe0'],['destroy','boom','Détruire','#ff8a7a','#e02d4f']];
@@ -685,17 +693,39 @@ $('species').innerHTML=D.map((d,i)=>{const vb=d.vb.join(' ');return `<div class=
 
 let S=null,CUR=null,bubKey=null,popT=0,lockT=0;
 const clamp=v=>Math.max(0,Math.min(100,v)),idx=()=>ORDER.indexOf(S.stage),rnd=a=>a[Math.floor(Math.random()*a.length)];
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&D[s.mon]&&ST[s.stage])return s}catch(e){}return null}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&D[s.mon]&&ST[s.stage]){
+  // valeurs par défaut des données ajoutées après la v1
+  if(s.since==null)s.since=Date.now();
+  if(s.care==null)s.care=50;
+  if(s.dayK==null)s.dayK=-1;
+  if(s.dayXp==null)s.dayXp=0;
+  return s}}catch(e){}return null}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 /* le temps qui passe, page ouverte ou fermée */
-function decay(dt){if(S.stage=='oeuf'||dt<=0)return;dt=Math.min(dt,12*3600);
+function decayStep(dt){dt=Math.min(dt,12*3600);
  if(S.asleep){const full=(100-S.energie)*3,d=Math.min(dt,full);S.energie=clamp(S.energie+d/3);S.faim=clamp(S.faim-d/90);dt-=d;if(S.energie>=100)S.asleep=false;if(dt<=0)return}
  const sad=(S.faim<20||S.propre<20)?2:1;
  S.faim=clamp(S.faim-dt/45);S.humeur=clamp(S.humeur-dt*sad/60);S.energie=clamp(S.energie-dt/90);S.propre=clamp(S.propre-dt/120)}
+// off = page fermée : aucune jauge ne descend sous 15 (si elle était déjà plus bas, elle ne bouge pas)
+function decay(dt,off){if(S.stage=='oeuf'||dt<=0)return;const old=GA.map(g=>S[g[0]]);decayStep(dt);
+ if(off)GA.forEach((g,i)=>{S[g[0]]=Math.max(S[g[0]],Math.min(old[i],15))})}
+// soins : moyenne glissante des quatre jauges, relevée à chaque visite
+function visite(){if(S.stage=='oeuf')return;const m=GA.reduce((a,g)=>a+S[g[0]],0)/4;S.care=Math.round(clamp(S.care*.8+m*.2))}
+
+/* rythme : points, plafond quotidien, durée minimale dans le stade */
+const dayNo=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/(DAYMS/DEBUG_SPEED));
+function gain(n){const cap=CAP[S.stage];if(!cap){S.xp+=n;return n}
+ const d=dayNo();if(S.dayK!=d){S.dayK=d;S.dayXp=0}
+ const g=Math.max(0,Math.min(n,cap-S.dayXp));S.dayXp+=g;S.xp+=g;return g}
+const capped=()=>{const cap=CAP[S.stage];return !!cap&&S.dayK==dayNo()&&S.dayXp>=cap};
+const ageLeft=()=>MINAGE[S.stage]*DAYMS-(Date.now()-S.since)*DEBUG_SPEED; // ms virtuelles restantes
+const ready=()=>NEED[S.stage]>0&&S.xp>=NEED[S.stage]&&ageLeft()<=0;
+function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/6e4)),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mi=m%60;
+ return 'encore '+(d?d+' j '+h+' h':h?h+' h '+mi+' min':mi+' min')}
 
 /* affichage */
-function weight(){const k=S.stage,n=NEED[k],w=n?BASEW[k]+(BASEW[ORDER[idx()+1]]-BASEW[k])*Math.pow(S.xp/n,2):BASEW.titan+S.xp*4000;
+function weight(){const k=S.stage,n=NEED[k],w=n?BASEW[k]+(BASEW[ORDER[idx()+1]]-BASEW[k])*Math.pow(Math.min(1,S.xp/n),2):BASEW.titan+S.xp*4000;
  return w<1000?Math.round(w)+' kg':(w/1000).toLocaleString('fr-FR',{maximumFractionDigits:w<1e5?1:0})+' t'}
 function mouth(){const p=ST[S.stage],d=CUR;return S.stage=='oeuf'?[500,470-p.m*100]:[500+p.m*(d.H[0]*p.bs+85*p.hs),470+p.m*(d.H[1]*p.bs-(1-p.bs)*(d.lift||0)+25*p.hs)]}
 function need(){if(S.asleep)return 'zz';if(S.stage=='oeuf')return 'heart';
@@ -711,7 +741,7 @@ function hud(){const k=S.stage,p=ST[k],isEgg=k=='oeuf';
  const cs=$('c-stage');cs.textContent=CUR.name+' · '+p.n;cs.style.setProperty('--sc',p.col);
  $('c-day').innerHTML=`Jour <b>${Math.floor((Date.now()-S.born)/864e5)+1}</b>`;$('c-w').innerHTML=`Poids <b>${weight()}</b>`;
  $('c-d').innerHTML=`Dégâts <b>${S.dmg?S.dmg+(S.dmg>1?' immeubles':' immeuble'):'aucun'}</b>`;
- $('e-next').textContent=p.next;$('e-bar').style.width=(NEED[k]?Math.min(100,100*S.xp/NEED[k]):100)+'%';
+ $('e-next').textContent=NEED[k]&&S.xp>=NEED[k]&&ageLeft()>0?fmtLeft(ageLeft()):p.next;$('e-cap').hidden=!capped();$('e-bar').style.width=(NEED[k]?Math.min(100,100*S.xp/NEED[k]):100)+'%';
  $('scene').classList.toggle('sleep',!!S.asleep);
  document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<3));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
  $('tray').classList.toggle('off',!!S.asleep);drawBubble()}
@@ -742,36 +772,36 @@ function flash(){fx(`<rect width="1000" height="600" fill="#fff"/>`,[{opacity:1}
 
 /* actions */
 const busy=()=>Date.now()<lockT||(lockT=Date.now()+420,false);
-function evolve(){const k=S.stage,n=NEED[k];if(!n||S.xp<n)return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;
+function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;S.since=Date.now();
  if(k=='oeuf')Object.assign(S,{faim:60,humeur:80,energie:80,propre:100});else S.humeur=clamp(S.humeur+20);
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
 function refuse(t){pop(t);react('no')}
 function feed(i){const k=S.stage,fo=FOODS[k];if(busy())return;
- if(k=='oeuf'){S.xp+=fo[i][3];if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');return done()}
+ if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');return done()}
  if(S.asleep)return pop('ZZZ…');
  if(i==null){const w=need();i=fo.findIndex(m=>m[0]==w);if(i<0)i=Math.floor(Math.random()*fo.length)}
  if(S.faim>=96)return refuse('BEURK !');
  const m=fo[i],wanted=need()==m[0];fly(m[0]);
- setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);S.xp+=m[3];S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
+ setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
   react('chomp');pop(rnd(MIAM[k]));done()},430)}
 function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');
- S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);S.xp+=2+idx()*2;react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
+ S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);gain(2+idx()*2);react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
 function destroy(){if(idx()<3||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
- S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);S.xp+=S.stage=='titan'?70:30;S.dmg++;react('jump');boom();pop(rnd(['BOUM !','CRAAAC !','BADABOUM !']));done()}
+ S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);gain(S.stage=='titan'?70:30);S.dmg++;react('jump');boom();pop(rnd(['BOUM !','CRAAAC !','BADABOUM !']));done()}
 const DO={feed:()=>feed(null),play,sleep,wash,destroy};
 
 /* démarrage */
 function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];drawAll()}}
-function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0};save();show();scrollTo(0,0)}
+function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0};save();show();scrollTo(0,0)}
 $('species').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)start(+c.dataset.i)});
 $('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S)feed(+c.dataset.i)});
 $('actions').addEventListener('click',e=>{const c=e.target.closest('.btn');if(c&&S&&S.stage!='oeuf')DO[c.dataset.a]()});
 $('b-new').addEventListener('click',()=>{if(confirm('Recommencer avec un nouvel œuf ? Ton monstre actuel sera perdu.')){try{localStorage.removeItem(KEY)}catch(e){}S=null;show()}});
-setInterval(()=>{if(!S)return;const now=Date.now();decay((now-S.t)/1000);S.t=now;hud();save()},1000);
-S=load();if(S){decay((Date.now()-S.t)/4000);S.t=Date.now()} // page fermée : le temps compte quatre fois moins
+setInterval(()=>{if(!S)return;const now=Date.now();decay((now-S.t)/1000*DEBUG_SPEED);S.t=now;if(!evolve())hud();save()},1000);
+S=load();if(S){const gap=Date.now()-S.t;decay(gap/4000*DEBUG_SPEED,true);S.t=Date.now();if(gap>=6e5)visite()} // page fermée : le temps compte quatre fois moins, jamais sous 15
 show();
 </script>
 </body>
