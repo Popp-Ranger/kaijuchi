@@ -1175,7 +1175,7 @@ function spawn(type,edge){if(PR.filter(o=>!o.gone).length>=MAXMV)return null;
  else if(M.m=='bounce'){const b=M.bounds?M.bounds(hw):[-hw+25,hw-25];o.lo=b[0];o.hi=b[1];o.x=edge?(o.dir>0?o.lo:o.hi):o.lo+Math.random()*(o.hi-o.lo)}
  else{o.u=Math.random();o.dur=1.6;o.wait=0;leapNew(o,hw)}
  const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','mv');g.dataset.id=o.id;g.style.pointerEvents='none';
- g.innerHTML=(o.live?`<circle class="halo pulse" cx="0" cy="${f(o.cy)}" r="${f(Math.max(o.r*.9,19/z))}" fill="#fff6a0" fill-opacity=".4" stroke="#fff" style="stroke-width:calc(var(--k)*2.4px)"/>`:'')+`<g class="fl">${M.sp()}</g>`+(o.live?`<circle cx="0" cy="${f(o.cy)}" r="${f(hit)}" fill="#000" fill-opacity="0" style="pointer-events:all;cursor:pointer"/>`:'');
+ g.innerHTML=(o.live?`<circle class="halo pulse" cx="0" cy="${f(o.cy)}" r="${f(Math.max(o.r*.9,19/z)*.4)}" fill="#fff6a0" fill-opacity=".4" stroke="#fff" style="stroke-width:calc(var(--k)*2.4px)"/>`:'')+`<g class="fl">${M.sp()}</g>`+(o.live?`<circle cx="0" cy="${f(o.cy)}" r="${f(hit)}" fill="#000" fill-opacity="0" style="pointer-events:all;cursor:pointer"/>`:'');
  o.el=g;o.fl=g.querySelector('.fl');o.flKey='';PB.appendChild(g);PR.push(o);place(o);return o}
 function leapNew(o,hw){o.u=0;o.xa=(Math.random()*2-1)*(hw-40);o.dir=Math.random()<.5?-1:1;o.xb=o.xa+o.dir*(60+Math.random()*50);o.H=95;o.x=o.xa;o.y=42}
 function place(o){const M=MV[o.type];let a=o.rot,k=o.dir*M.art*o.sc+'|'+o.sc+'|'+a.toFixed(0);
