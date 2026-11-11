@@ -23,7 +23,7 @@ const AC=[['feed','meat','Nourrir','#ffb36b','#f2681f'],['play','ball','Jouer','
 $('actions').innerHTML=AC.map(a=>`<button class="btn" data-a="${a[0]}" style="--b1:${a[3]};--b2:${a[4]}">${ui(a[1])}<span>${a[2]}</span><svg class="lock" viewBox="0 0 30 30">${UI.lock}</svg></button>`).join('');
 $('species').innerHTML=D.map((d,i)=>{const vb=d.vb.join(' ');return `<div class="card" data-i="${i}" style="--cb:${d.cb}"><svg viewBox="${vb}">${rays(vb)}${mon(d,'adulte','p',false)}</svg><div class="n">${d.name}</div><div class="a">${d.tag}</div></div>`}).join('');
 
-let S=null,CUR=null,bubKey=null,popT=0,lockT=0;
+let S=null,CUR=null,bubKey=null,popT=0,lockT=0,mini=false; // mini : un mini-jeu est ouvert
 const clamp=v=>Math.max(0,Math.min(100,v)),idx=()=>ORDER.indexOf(S.stage),rnd=a=>a[Math.floor(Math.random()*a.length)];
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&D[s.mon]&&ST[s.stage]){
   // valeurs par défaut des données ajoutées après la v1
@@ -82,7 +82,7 @@ function drawTray(){$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.
 function drawAlbum(){const n=idx();$('stages').innerHTML=ORDER.map((k,i)=>{const p=ST[k],ok=i<=n;return `<div class="card album${i==n?' on':''}${ok?'':' lock'}" style="--cb:${p.cb}"><svg viewBox="${p.vb}">${rays(p.vb)}<g class="sil">${k=='oeuf'?egg('c',CUR):mon(CUR,k,'c',false)}</g></svg><div class="n">${ok?p.n:'???'}</div><div class="a">${ok?p.short:'à découvrir'}</div></div>`}).join('')}
 function drawMon(){const k=S.stage,p=ST[k];$('scene').dataset.s=k;zoomTo(p.z);
  MON.setAttribute('transform',`translate(500,470) scale(${p.m})`);MON.innerHTML=`<g id="act"><g class="popin">${k=='oeuf'?egg('s',CUR):mon(CUR,k,'s',true)}</g></g>`}
-function drawAll(){drawMon();drawTray();drawAlbum();bubKey=null;hud()}
+function drawAll(){drawMon();syncPrey();drawTray();drawAlbum();bubKey=null;hud()}
 
 /* effets */
 function pop(t){const [x,y]=ST[S.stage].pop,P=$('pop');clearTimeout(popT);
@@ -91,9 +91,10 @@ function pop(t){const [x,y]=ST[S.stage].pop,P=$('pop');clearTimeout(popT);
 function react(c){const a=$('act');if(!a)return;a.setAttribute('class','');a.getBoundingClientRect();a.setAttribute('class',c)}
 function fx(html,frames,ms){const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.innerHTML=html;$('fx').appendChild(g);
  const end=()=>g.remove(),an=g.animate?g.animate(frames,{duration:ms,easing:'ease-in',fill:'forwards'}):null;if(an)an.onfinish=end;setTimeout(end,ms+80)}
-function fly(n){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3]),[mx,my]=mouth();
+function fly(n,sx,sy){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3]),[mx,my]=mouth();
+ const ax=sx==null?mx+330:sx,ay=sy==null?my+170:sy,bx=sx==null?mx+150:mx+(ax-mx)*.4,by=sx==null?my-40:my+(ay-my)*.4-50; // départ : hors champ, ou la position de la proie cliquée
  fx(`<svg x="${-v[2]*k/2}" y="${-v[3]*k/2}" width="${v[2]*k}" height="${v[3]*k}" viewBox="${IC[n][0]}" style="--k:1.4">${IC[n][1]}</svg>`,
-  [{transform:`translate(${f(mx+330)}px,${f(my+170)}px) scale(1)`},{transform:`translate(${f(mx+150)}px,${f(my-40)}px) scale(.9)`,offset:.55},{transform:`translate(${f(mx)}px,${f(my)}px) scale(.25)`}],480)}
+  [{transform:`translate(${f(ax)}px,${f(ay)}px) scale(1)`},{transform:`translate(${f(bx)}px,${f(by)}px) scale(.9)`,offset:.55},{transform:`translate(${f(mx)}px,${f(my)}px) scale(.25)`}],480)}
 function bubbles(){const p=ST[S.stage],h=p.m*p.bs*300,w=p.m*p.bs*170;for(let i=0;i<14;i++){const x=500+(Math.random()*2-1)*w,y=470-Math.random()*h,r=8+Math.random()*14;
  fx(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#fff" opacity=".65" stroke="#9fe0ff" stroke-width="3"/><circle cx="${f(x-r*.3)}" cy="${f(y-r*.3)}" r="${f(r*.25)}" fill="#fff"/>`,
   [{transform:'translateY(20px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.25},{transform:'translateY(-90px)',opacity:0}],700+Math.random()*600)}}
@@ -110,14 +111,14 @@ function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.s
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
 function refuse(t){pop(t);react('no')}
-function feed(i){const k=S.stage,fo=FOODS[k];if(busy())return;
- if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');return done()}
- if(S.asleep)return pop('ZZZ…');
+function feed(i,src){const k=S.stage,fo=FOODS[k];if(busy())return false;
+ if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');done();return true}
+ if(S.asleep){pop('ZZZ…');return false}
  if(i==null){const w=need();i=fo.findIndex(m=>m[0]==w);if(i<0)i=Math.floor(Math.random()*fo.length)}
- if(S.faim>=96)return refuse('BEURK !');
- const m=fo[i],wanted=need()==m[0];fly(m[0]);
+ if(S.faim>=96){refuse('BEURK !');return false}
+ const m=fo[i],wanted=need()==m[0];fly(m[0],src&&src[0],src&&src[1]);
  setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
-  react('chomp');pop(rnd(MIAM[k]));done()},430)}
+  react('chomp');pop(rnd(MIAM[k]));done()},430);return true}
 function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');
  S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);gain(2+idx()*2);react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}

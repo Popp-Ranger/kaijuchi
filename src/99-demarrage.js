@@ -1,5 +1,5 @@
 /* démarrage */
-function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}}
+function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}else stopPrey()}
 function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0,city:{niveau:1,pv:{}}};save();show();scrollTo(0,0)}
 $('species').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)start(+c.dataset.i)});
 $('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S)feed(+c.dataset.i)});

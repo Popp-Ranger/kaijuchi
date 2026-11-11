@@ -17,17 +17,15 @@ ${cloud(170,120,1.1,3)}${cloud(480,86,.8,11)}${cloud(660,190,.7,6)}${cloud(940,2
 <path d="M0 450 L0 380 C80 340,160 350,240 384 C320 350,420 340,520 380 C620 344,720 350,820 384 C900 356,960 360,1000 372 L1000 450 Z" fill="#8fd6a0"/>
 <path d="M0 470 L0 410 C120 384,220 392,330 414 C460 388,560 392,680 414 C800 392,900 394,1000 408 L1000 470 Z" fill="#74c98a"/>
 <g id="world">${wb}</g>
-<g class="prop p-bebe"><g class="fly">${butterfly(640,360,'#ff8fc0','#ffd23f',1.5)}</g><g class="fly" style="animation-delay:-2s">${butterfly(330,250,'#7cc8ff','#b58cff',1.2)}</g><g class="fly" style="animation-delay:-3.4s">${butterfly(760,250,'#ffd23f','#ff9a3c',1)}</g></g>
+<g id="prey"></g>
 <g id="mon"></g>
 <g id="worldF">${wf}</g>
-<g class="prop p-bebe">${apple(662,500,1.5)}${apple(716,512,1.2)}${ladybug(300,508,1.4)}</g>
-<g class="prop p-ado">${cow(742,500,1.9,1)}<text x="690" y="372" font-size="54" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="3" paint-order="stroke">!</text></g>
 <g class="prop p-titan"><polygon points="${star(915,372,60,30,11)}" fill="#fff" stroke="${L}" stroke-width="3"/><polygon points="${star(915,372,44,20,11)}" fill="#ffd23f"/><polygon points="${star(915,372,26,12,11)}" fill="#ff7a2e"/></g>
 <rect id="night" width="1000" height="600" fill="#1a1450" opacity="0"/><g id="fx"></g><g id="bub"></g><g id="pop"></g>`;
-const W=document.getElementById('world'),WF=document.getElementById('worldF'),MON=document.getElementById('mon');
+const PB=document.getElementById("prey"),W=document.getElementById("world"),WF=document.getElementById('worldF'),MON=document.getElementById('mon');
 let zCur=null,raf=0;
 function zoomTo(z){const from=zCur||z,t0=performance.now();cancelAnimationFrame(raf);
  const step=t=>{let u=from==z?1:Math.min(1,Math.max(0,(t-t0)/1000));u=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;zCur=from*Math.pow(z/from,u);
-  [W,WF].forEach(g=>{g.setAttribute('transform',`translate(500,470) scale(${zCur.toFixed(4)})`);g.style.setProperty('--k',Math.pow(zCur,-.82).toFixed(3))});
+  [W,WF,PB].forEach(g=>{g.setAttribute('transform',`translate(500,470) scale(${zCur.toFixed(4)})`);g.style.setProperty('--k',Math.pow(zCur,-.82).toFixed(3))});
   if(u<1)raf=requestAnimationFrame(step)};step(t0)}
 

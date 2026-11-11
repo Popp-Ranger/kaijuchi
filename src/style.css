@@ -107,6 +107,7 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
 .wig{animation:wig 1.8s ease-in-out infinite alternate;transform-origin:0 0}
 @keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 /* jeu */
+svg[data-s=titan] [data-b]{cursor:pointer}
 .capm{display:inline-block;vertical-align:middle;margin-right:6px}
 .capm[hidden]{display:none}
 .capm svg{width:22px;height:22px;display:block}

@@ -116,6 +116,7 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
 .wig{animation:wig 1.8s ease-in-out infinite alternate;transform-origin:0 0}
 @keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 /* jeu */
+svg[data-s=titan] [data-b]{cursor:pointer}
 .capm{display:inline-block;vertical-align:middle;margin-right:6px}
 .capm[hidden]{display:none}
 .capm svg{width:22px;height:22px;display:block}
@@ -375,15 +376,7 @@ function world(lv=1,pvs={}){const R=mb(11+lv*31);let b='',fg='';
  // arbres, lampadaires, passants du trottoir
  for(let x=-270;x<1080;x+=70+R()*60)b+=tree(x,-42,.85+R()*.3,Math.floor(R()*3));
  for(let x=-240;x<1080;x+=150)b+=lamp(x,-41);
- const ps=[];for(let k=0;k<26;k++){const x=100+R()*950;ps.push(person(x,-41,k,R()<.8?1:-1,.9))}
- for(let k=0;k<5;k++)ps.push(person(-300+R()*60,-41,k+3,-1,.9));b+=grp(ps);
- // véhicules
- b+=car(-262,-29,'#4db8ff',-1)+car(196,-29,'#ffd23f',-1)+bus(380,-29,'#ff5a5a',-1)+car(560,-29,'#b58cff',-1)+car(720,-29,'#5ed36a',-1)+car(905,-29,'#ff8fc0',-1);
- b+=car(-150,-15,'#ff9a3c',1)+car(270,-15,'#ff5a5a',1)+car(450,-15,'#fff',1)+car(640,-15,'#4db8ff',1)+bus(800,-15,'#ffd23f',1)+car(980,-15,'#5ed36a',1);
- // bateaux
- b+=cargo(-640,-34,1,3)+cargo(-930,-40,.7,8)+sail(-430,-20,1,'#ff8fc0')+sail(-540,70,1.2,'#5ed36a');if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
- // hélicoptères
- b+=heli(262,-338,1,'#ff9320',0)+heli(-700,-330,1.5,'#4db8ff',.6)+heli(720,-700,1.5,'#ff5a8a',1.1);
+ if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
  // dégâts
  b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g>`;
  // passants sur l'herbe
@@ -679,18 +672,16 @@ ${cloud(170,120,1.1,3)}${cloud(480,86,.8,11)}${cloud(660,190,.7,6)}${cloud(940,2
 <path d="M0 450 L0 380 C80 340,160 350,240 384 C320 350,420 340,520 380 C620 344,720 350,820 384 C900 356,960 360,1000 372 L1000 450 Z" fill="#8fd6a0"/>
 <path d="M0 470 L0 410 C120 384,220 392,330 414 C460 388,560 392,680 414 C800 392,900 394,1000 408 L1000 470 Z" fill="#74c98a"/>
 <g id="world">${wb}</g>
-<g class="prop p-bebe"><g class="fly">${butterfly(640,360,'#ff8fc0','#ffd23f',1.5)}</g><g class="fly" style="animation-delay:-2s">${butterfly(330,250,'#7cc8ff','#b58cff',1.2)}</g><g class="fly" style="animation-delay:-3.4s">${butterfly(760,250,'#ffd23f','#ff9a3c',1)}</g></g>
+<g id="prey"></g>
 <g id="mon"></g>
 <g id="worldF">${wf}</g>
-<g class="prop p-bebe">${apple(662,500,1.5)}${apple(716,512,1.2)}${ladybug(300,508,1.4)}</g>
-<g class="prop p-ado">${cow(742,500,1.9,1)}<text x="690" y="372" font-size="54" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="3" paint-order="stroke">!</text></g>
 <g class="prop p-titan"><polygon points="${star(915,372,60,30,11)}" fill="#fff" stroke="${L}" stroke-width="3"/><polygon points="${star(915,372,44,20,11)}" fill="#ffd23f"/><polygon points="${star(915,372,26,12,11)}" fill="#ff7a2e"/></g>
 <rect id="night" width="1000" height="600" fill="#1a1450" opacity="0"/><g id="fx"></g><g id="bub"></g><g id="pop"></g>`;
-const W=document.getElementById('world'),WF=document.getElementById('worldF'),MON=document.getElementById('mon');
+const PB=document.getElementById("prey"),W=document.getElementById("world"),WF=document.getElementById('worldF'),MON=document.getElementById('mon');
 let zCur=null,raf=0;
 function zoomTo(z){const from=zCur||z,t0=performance.now();cancelAnimationFrame(raf);
  const step=t=>{let u=from==z?1:Math.min(1,Math.max(0,(t-t0)/1000));u=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;zCur=from*Math.pow(z/from,u);
-  [W,WF].forEach(g=>{g.setAttribute('transform',`translate(500,470) scale(${zCur.toFixed(4)})`);g.style.setProperty('--k',Math.pow(zCur,-.82).toFixed(3))});
+  [W,WF,PB].forEach(g=>{g.setAttribute('transform',`translate(500,470) scale(${zCur.toFixed(4)})`);g.style.setProperty('--k',Math.pow(zCur,-.82).toFixed(3))});
   if(u<1)raf=requestAnimationFrame(step)};step(t0)}
 
 /* ---------- le jeu ---------- */
@@ -718,7 +709,7 @@ const AC=[['feed','meat','Nourrir','#ffb36b','#f2681f'],['play','ball','Jouer','
 $('actions').innerHTML=AC.map(a=>`<button class="btn" data-a="${a[0]}" style="--b1:${a[3]};--b2:${a[4]}">${ui(a[1])}<span>${a[2]}</span><svg class="lock" viewBox="0 0 30 30">${UI.lock}</svg></button>`).join('');
 $('species').innerHTML=D.map((d,i)=>{const vb=d.vb.join(' ');return `<div class="card" data-i="${i}" style="--cb:${d.cb}"><svg viewBox="${vb}">${rays(vb)}${mon(d,'adulte','p',false)}</svg><div class="n">${d.name}</div><div class="a">${d.tag}</div></div>`}).join('');
 
-let S=null,CUR=null,bubKey=null,popT=0,lockT=0;
+let S=null,CUR=null,bubKey=null,popT=0,lockT=0,mini=false; // mini : un mini-jeu est ouvert
 const clamp=v=>Math.max(0,Math.min(100,v)),idx=()=>ORDER.indexOf(S.stage),rnd=a=>a[Math.floor(Math.random()*a.length)];
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&D[s.mon]&&ST[s.stage]){
   // valeurs par défaut des données ajoutées après la v1
@@ -777,7 +768,7 @@ function drawTray(){$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.
 function drawAlbum(){const n=idx();$('stages').innerHTML=ORDER.map((k,i)=>{const p=ST[k],ok=i<=n;return `<div class="card album${i==n?' on':''}${ok?'':' lock'}" style="--cb:${p.cb}"><svg viewBox="${p.vb}">${rays(p.vb)}<g class="sil">${k=='oeuf'?egg('c',CUR):mon(CUR,k,'c',false)}</g></svg><div class="n">${ok?p.n:'???'}</div><div class="a">${ok?p.short:'à découvrir'}</div></div>`}).join('')}
 function drawMon(){const k=S.stage,p=ST[k];$('scene').dataset.s=k;zoomTo(p.z);
  MON.setAttribute('transform',`translate(500,470) scale(${p.m})`);MON.innerHTML=`<g id="act"><g class="popin">${k=='oeuf'?egg('s',CUR):mon(CUR,k,'s',true)}</g></g>`}
-function drawAll(){drawMon();drawTray();drawAlbum();bubKey=null;hud()}
+function drawAll(){drawMon();syncPrey();drawTray();drawAlbum();bubKey=null;hud()}
 
 /* effets */
 function pop(t){const [x,y]=ST[S.stage].pop,P=$('pop');clearTimeout(popT);
@@ -786,9 +777,10 @@ function pop(t){const [x,y]=ST[S.stage].pop,P=$('pop');clearTimeout(popT);
 function react(c){const a=$('act');if(!a)return;a.setAttribute('class','');a.getBoundingClientRect();a.setAttribute('class',c)}
 function fx(html,frames,ms){const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.innerHTML=html;$('fx').appendChild(g);
  const end=()=>g.remove(),an=g.animate?g.animate(frames,{duration:ms,easing:'ease-in',fill:'forwards'}):null;if(an)an.onfinish=end;setTimeout(end,ms+80)}
-function fly(n){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3]),[mx,my]=mouth();
+function fly(n,sx,sy){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3]),[mx,my]=mouth();
+ const ax=sx==null?mx+330:sx,ay=sy==null?my+170:sy,bx=sx==null?mx+150:mx+(ax-mx)*.4,by=sx==null?my-40:my+(ay-my)*.4-50; // départ : hors champ, ou la position de la proie cliquée
  fx(`<svg x="${-v[2]*k/2}" y="${-v[3]*k/2}" width="${v[2]*k}" height="${v[3]*k}" viewBox="${IC[n][0]}" style="--k:1.4">${IC[n][1]}</svg>`,
-  [{transform:`translate(${f(mx+330)}px,${f(my+170)}px) scale(1)`},{transform:`translate(${f(mx+150)}px,${f(my-40)}px) scale(.9)`,offset:.55},{transform:`translate(${f(mx)}px,${f(my)}px) scale(.25)`}],480)}
+  [{transform:`translate(${f(ax)}px,${f(ay)}px) scale(1)`},{transform:`translate(${f(bx)}px,${f(by)}px) scale(.9)`,offset:.55},{transform:`translate(${f(mx)}px,${f(my)}px) scale(.25)`}],480)}
 function bubbles(){const p=ST[S.stage],h=p.m*p.bs*300,w=p.m*p.bs*170;for(let i=0;i<14;i++){const x=500+(Math.random()*2-1)*w,y=470-Math.random()*h,r=8+Math.random()*14;
  fx(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#fff" opacity=".65" stroke="#9fe0ff" stroke-width="3"/><circle cx="${f(x-r*.3)}" cy="${f(y-r*.3)}" r="${f(r*.25)}" fill="#fff"/>`,
   [{transform:'translateY(20px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.25},{transform:'translateY(-90px)',opacity:0}],700+Math.random()*600)}}
@@ -805,14 +797,14 @@ function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.s
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
 function refuse(t){pop(t);react('no')}
-function feed(i){const k=S.stage,fo=FOODS[k];if(busy())return;
- if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');return done()}
- if(S.asleep)return pop('ZZZ…');
+function feed(i,src){const k=S.stage,fo=FOODS[k];if(busy())return false;
+ if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');done();return true}
+ if(S.asleep){pop('ZZZ…');return false}
  if(i==null){const w=need();i=fo.findIndex(m=>m[0]==w);if(i<0)i=Math.floor(Math.random()*fo.length)}
- if(S.faim>=96)return refuse('BEURK !');
- const m=fo[i],wanted=need()==m[0];fly(m[0]);
+ if(S.faim>=96){refuse('BEURK !');return false}
+ const m=fo[i],wanted=need()==m[0];fly(m[0],src&&src[0],src&&src[1]);
  setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
-  react('chomp');pop(rnd(MIAM[k]));done()},430)}
+  react('chomp');pop(rnd(MIAM[k]));done()},430);return true}
 function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');
  S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);gain(2+idx()*2);react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
@@ -846,8 +838,79 @@ function cityCleared(){const l=S.city.niveau;gain(40+20*l);S.humeur=clamp(S.hume
 // passe à la ville suivante quand tout est rasé et que le stade du monstre le permet
 function cityAdvance(){if(standing().length)return false;const n=S.city.niveau+1;if(idx()<lvInfo(n).st)return false;
  S.city={niveau:n,pv:{}};buildWorld();return true}
+/* ---------- proies mobiles cliquables dans le décor ---------- */
+// Objets {type,x,y,dir,v}, déplacés par requestAnimationFrame dans le groupe #prey (attribut transform, jamais de CSS).
+// f = nom de la proie dans FOODS (null : simple passant), r = rayon de clic, cy = hauteur du centre, v = vitesse en pixels d'écran par seconde,
+// m = mode (wrap : traverse puis réapparaît de l'autre côté, bounce : fait demi-tour, leap : saute en arc), art = sens du dessin (1 = regarde à droite)
+const CARC=['#4db8ff','#ffd23f','#b58cff','#5ed36a','#ff8fc0','#ff9a3c','#ff5a5a','#ffffff'],ri=n=>Math.floor(Math.random()*n);
+const crowdSp=()=>`<g class="run">`+person(-12,0,ri(8),1)+person(12,0,ri(8),1)+person(0,2,ri(8),1)+`</g>`;
+const MV={
+ butterfly:{f:'butterfly',r:26,cy:0,v:42,m:'wrap',art:1,y:()=>-85+Math.random()*60,sp:()=>butterfly(0,0,rnd(['#ff8fc0','#7cc8ff','#ffd23f']),rnd(['#ffd23f','#b58cff','#ff9a3c']),1.15)},
+ ladybug:{f:'ladybug',r:24,cy:-11,v:7,m:'bounce',art:1,y:()=>6+Math.random()*18,sp:()=>ladybug(0,0,1.3)},
+ apple:{f:'apple',r:24,cy:-19,v:11,m:'bounce',art:1,spin:1,y:()=>8+Math.random()*18,sp:()=>apple(0,0,1.3)},
+ fish:{f:'fish',r:32,cy:0,m:'leap',art:1,sp:()=>fish(0,0,1.4)},
+ cow:{f:'cow',r:46,cy:-26,v:9,m:'bounce',art:-1,y:()=>-2+Math.random()*12,sp:()=>cow(0,0,1,1)},
+ car:{f:'car',r:42,cy:-18,v:68,m:'wrap',art:1,lane:()=>rnd([[-29,-1],[-15,1]]),sp:()=>car(0,0,rnd(CARC),1,1)},
+ bus:{f:'bus',r:56,cy:-22,v:52,m:'wrap',art:1,lane:()=>rnd([[-29,-1],[-15,1]]),sp:()=>bus(0,0,rnd(CARC),1)},
+ walker:{f:null,r:14,cy:-10,v:22,m:'wrap',art:1,lane:()=>[-41,rnd([-1,1])],sp:()=>`<g class="run">`+person(0,0,ri(8),1,.9)+`</g>`},
+ crowd:{f:'crowd',r:28,cy:-12,v:20,m:'wrap',art:1,lane:()=>[-41,rnd([-1,1])],sc:()=>1.15,sp:crowdSp},
+ boat:{f:'boat',r:50,cy:-40,v:18,m:'bounce',art:1,lane:()=>{const y=rnd([-20,40,100,160,220]);return [y,rnd([-1,1])]},sc:o=>1+(o.y+20)/700,
+  bounds:hw=>[Math.max(-1050,-hw-170),-390],sp:()=>sail(0,0,1,rnd(['#ff8fc0','#5ed36a','#ffd23f','#b58cff','#ff9a3c']))},
+ heli:{f:'heli',r:70,cy:-14,v:55,m:'wrap',art:-1,y:()=>-420+Math.random()*150,sc:()=>1+Math.random()*.5,sp:()=>heli(0,0,1,rnd(['#ff9320','#4db8ff','#ff5a8a']),Math.random()*2)},
+ cargo:{f:'cargo',r:150,cy:-60,v:9,m:'bounce',art:1,lane:()=>rnd([[-34,1],[-40,1]]),sc:o=>o.y==-40?.7:1,bounds:hw=>[-1050,-480],sp:()=>cargo(0,0,1,ri(20))},
+ district:{f:'district',r:100,cy:-55,v:7,m:'bounce',art:1,y:()=>-30,bounds:hw=>[-980,-500],
+  sp:()=>`<path class="o" d="M-104 -10 L104 -10 L86 8 L-86 8 Z" fill="#8a84a3"/><g transform="translate(-88,-8)">${IC.district[1]}</g>`}
+};
+// population par stade : [type, nombre] (douze objets mobiles au plus)
+const POP={bebe:[['butterfly',3],['ladybug',2],['apple',2],['fish',1]],ado:[['cow',2],['car',3],['bus',1],['walker',2]],
+ adulte:[['boat',2],['heli',2],['crowd',2],['bus',2],['car',3]],titan:[['cargo',2],['district',1],['car',3],['bus',1],['boat',2],['heli',1]]};
+const MAXMV=12,EDGE=170;
+let PR=[],preyStage=null,preyRaf=0,preyT=0,pid=0;
+
+function spawn(type,edge){if(PR.filter(o=>!o.gone).length>=MAXMV)return null;
+ const M=MV[type],z=ST[preyStage].z,hw=500/z,o={id:++pid,type,f:M.f,tm:Math.random()*9,ph:Math.random()*6.28,rot:0,gone:false};
+ let ln=M.lane?M.lane():[M.y?M.y():0,rnd([-1,1])];o.y=ln[0];o.dir=ln[1];o.sc=M.sc?M.sc(o):1;o.cy=M.cy*o.sc;o.r=M.r*o.sc;o.y0=o.y;o.v=(M.v||0)/z;
+ o.live=!!M.f&&FOODS[preyStage].some(m=>m[0]==M.f); // seules les proies du stade sont cliquables
+ const hit=Math.max(o.r,23/z); // zone de clic : au moins 44 px à l'écran, quel que soit le zoom
+ if(M.m=='wrap'){const lim=hw+EDGE+o.r;o.lim=lim;o.x=edge?-o.dir*lim:(Math.random()*2-1)*hw}
+ else if(M.m=='bounce'){const b=M.bounds?M.bounds(hw):[-hw+25,hw-25];o.lo=b[0];o.hi=b[1];o.x=edge?(o.dir>0?o.lo:o.hi):o.lo+Math.random()*(o.hi-o.lo)}
+ else{o.u=Math.random();o.dur=1.6;o.wait=0;leapNew(o,hw)}
+ const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','mv');g.dataset.id=o.id;g.style.pointerEvents='none';
+ g.innerHTML=(o.live?`<circle class="halo pulse" cx="0" cy="${f(o.cy)}" r="${f(Math.max(o.r*.9,19/z))}" fill="#fff6a0" fill-opacity=".4" stroke="#fff" style="stroke-width:calc(var(--k)*2.4px)"/>`:'')+`<g class="fl">${M.sp()}</g>`+(o.live?`<circle cx="0" cy="${f(o.cy)}" r="${f(hit)}" fill="#000" fill-opacity="0" style="pointer-events:all;cursor:pointer"/>`:'');
+ o.el=g;o.fl=g.querySelector('.fl');o.flKey='';PB.appendChild(g);PR.push(o);place(o);return o}
+function leapNew(o,hw){o.u=0;o.xa=(Math.random()*2-1)*(hw-40);o.dir=Math.random()<.5?-1:1;o.xb=o.xa+o.dir*(60+Math.random()*50);o.H=95;o.x=o.xa;o.y=42}
+function place(o){const M=MV[o.type];let a=o.rot,k=o.dir*M.art*o.sc+'|'+o.sc+'|'+a.toFixed(0);
+ o.el.setAttribute('transform',`translate(${o.x.toFixed(1)},${o.y.toFixed(1)})`);
+ if(k!=o.flKey){o.flKey=k;o.fl.setAttribute('transform',`scale(${o.dir*M.art*o.sc},${o.sc})`+(a?` rotate(${a.toFixed(1)} 0 ${(M.cy).toFixed(1)})`:''))}}
+function stepMover(o,dt,hw){const M=MV[o.type];o.tm+=dt;
+ if(M.m=='wrap'){o.x+=o.dir*o.v*dt;if(o.dir>0?o.x>o.lim:o.x<-o.lim)o.x=-o.dir*o.lim;if(M.f=='butterfly')o.y=o.y0+Math.sin(o.tm*2.2+o.ph)*12}
+ else if(M.m=='bounce'){o.x+=o.dir*o.v*dt;if(o.x>o.hi){o.x=o.hi;o.dir=-1}else if(o.x<o.lo){o.x=o.lo;o.dir=1}if(M.spin)o.rot=(o.rot+o.v*dt*3.2)%360}
+ else{if(o.wait>0){o.wait-=dt;o.el.style.display='none';if(o.wait<=0){leapNew(o,hw);o.el.style.display=''}return}
+  o.u+=dt/o.dur;if(o.u>=1){o.wait=.8+Math.random()*1.6;o.u=1}
+  const u=o.u;o.x=o.xa+(o.xb-o.xa)*u;o.y=42-4*o.H*u*(1-u);const vy=-4*o.H*(1-2*u)/o.dur,vx=Math.abs(o.xb-o.xa)/o.dur;o.rot=Math.atan2(vy,vx)*57.3}
+ place(o)}
+function preyTick(t){preyRaf=requestAnimationFrame(preyTick);const dt=Math.min(.05,Math.max(0,(t-preyT)/1000));preyT=t;
+ if(!preyStage)return;const hw=500/ST[preyStage].z;for(const o of PR)if(!o.gone)stepMover(o,dt,hw)}
+function preyRun(on){cancelAnimationFrame(preyRaf);preyRaf=0;if(on&&!document.hidden){preyT=performance.now();preyRaf=requestAnimationFrame(preyTick)}}
+function stopPrey(){preyRun(false);PR=[];preyStage=null;PB.innerHTML=''}
+// (re)crée les objets mobiles du stade courant ; sans effet si le stade n'a pas changé
+function syncPrey(force){if(!S||S.stage=='oeuf'){if(preyStage)stopPrey();return}
+ if(!force&&preyStage==S.stage&&PR.length)return;stopPrey();preyStage=S.stage;PB.innerHTML='';
+ (POP[S.stage]||[]).forEach(([t,n])=>{for(let i=0;i<n;i++)spawn(t,false)});preyRun(true)}
+// une proie mangée disparaît puis réapparaît au bord quelques secondes plus tard
+function eatMover(o){o.gone=true;o.el.remove();const st=preyStage,type=o.type;
+ PR=PR.filter(p=>p!==o);setTimeout(()=>{if(S&&preyStage==st)spawn(type,true)},3000+Math.random()*3000)}
+PB.addEventListener('pointerdown',e=>{const g=e.target.closest('.mv');if(!g||!S||S.stage=='oeuf'||mini)return;
+ const o=PR.find(p=>p.id==g.dataset.id);if(!o||!o.live)return;e.preventDefault();
+ const i=FOODS[S.stage].findIndex(m=>m[0]==o.f);if(i<0)return;
+ const z=zCur||1,sx=500+z*o.x,sy=470+z*(o.y+o.cy);if(feed(i,[sx,sy]))eatMover(o)});
+// au stade titan, les immeubles encore debout se mangent aussi d'un clic (proie « Immeuble »)
+W.addEventListener('pointerdown',e=>{if(!S||S.stage!='titan'||mini)return;const g=e.target.closest('[data-b]');if(!g)return;
+ const B=cityList().find(b=>b.id==g.dataset.b);if(!B||pvNow(B)<=0)return;const [sx,sy]=bScreen(B);
+ if(feed(0,[sx,sy])){hitB(B,1e9);boom(sx,sy);if(!standing().length)cityCleared()}});
+document.addEventListener('visibilitychange',()=>preyRun(!document.hidden&&!!preyStage));
 /* démarrage */
-function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}}
+function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}else stopPrey()}
 function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0,city:{niveau:1,pv:{}}};save();show();scrollTo(0,0)}
 $('species').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)start(+c.dataset.i)});
 $('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S)feed(+c.dataset.i)});

@@ -23,15 +23,7 @@ function world(lv=1,pvs={}){const R=mb(11+lv*31);let b='',fg='';
  // arbres, lampadaires, passants du trottoir
  for(let x=-270;x<1080;x+=70+R()*60)b+=tree(x,-42,.85+R()*.3,Math.floor(R()*3));
  for(let x=-240;x<1080;x+=150)b+=lamp(x,-41);
- const ps=[];for(let k=0;k<26;k++){const x=100+R()*950;ps.push(person(x,-41,k,R()<.8?1:-1,.9))}
- for(let k=0;k<5;k++)ps.push(person(-300+R()*60,-41,k+3,-1,.9));b+=grp(ps);
- // véhicules
- b+=car(-262,-29,'#4db8ff',-1)+car(196,-29,'#ffd23f',-1)+bus(380,-29,'#ff5a5a',-1)+car(560,-29,'#b58cff',-1)+car(720,-29,'#5ed36a',-1)+car(905,-29,'#ff8fc0',-1);
- b+=car(-150,-15,'#ff9a3c',1)+car(270,-15,'#ff5a5a',1)+car(450,-15,'#fff',1)+car(640,-15,'#4db8ff',1)+bus(800,-15,'#ffd23f',1)+car(980,-15,'#5ed36a',1);
- // bateaux
- b+=cargo(-640,-34,1,3)+cargo(-930,-40,.7,8)+sail(-430,-20,1,'#ff8fc0')+sail(-540,70,1.2,'#5ed36a');if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
- // hélicoptères
- b+=heli(262,-338,1,'#ff9320',0)+heli(-700,-330,1.5,'#4db8ff',.6)+heli(720,-700,1.5,'#ff5a8a',1.1);
+ if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
  // dégâts
  b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g>`;
  // passants sur l'herbe
