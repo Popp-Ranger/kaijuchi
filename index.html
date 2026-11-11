@@ -116,6 +116,27 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
 .wig{animation:wig 1.8s ease-in-out infinite alternate;transform-origin:0 0}
 @keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 /* jeu */
+svg[data-s=titan] [data-b]{cursor:pointer}
+.mg{position:absolute;left:0;right:0;top:0;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize}
+.mg[hidden]{display:none}
+.mg>svg{display:block;width:100%;height:100%}
+.mgskip{position:absolute;right:14px;bottom:12px;font-size:16px;padding:4px 18px}
+.st{position:absolute;inset:0;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.st[hidden]{display:none}
+#st-skip{bottom:96px}
+.stp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(70%,560px);background:var(--cream);border:4px solid var(--ink);border-radius:22px;padding:8px 14px 12px;box-shadow:0 5px 0 var(--ink)}
+.stpips{display:flex;justify-content:center;gap:10px;margin-bottom:6px}
+.stpips i{width:18px;height:18px;border-radius:50%;border:3px solid var(--ink);background:#fff}
+.stpips i.crit{background:#ffd23f}.stpips i.ok{background:#5ed36a}.stpips i.miss{background:#9a94b3}
+.stbar{position:relative;height:34px;border:4px solid var(--ink);border-radius:20px;background:#ff8a7a;overflow:hidden}
+.stbar i{position:absolute;top:0;bottom:0}
+.sty{background:#ffd23f}.stg{background:#5ed36a;border-left:3px solid var(--ink);border-right:3px solid var(--ink)}
+.stc{position:absolute;top:0;bottom:0;width:10px;margin-left:-5px;background:#fff;border:3px solid var(--ink);border-radius:5px}
+.mgact.chomp{animation:chomp .35s ease-in-out}
+.mgact.no{animation:no .35s ease-in-out}
+.capm{display:inline-block;vertical-align:middle;margin-right:6px}
+.capm[hidden]{display:none}
+.capm svg{width:22px;height:22px;display:block}
 .app.home #game,.app.home .top .chip{display:none}
 .app:not(.home) #home{display:none}
 #home .card .n{font-size:24px}
@@ -165,9 +186,11 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
     <div class="screen" id="screen">
       <div class="gauges" id="gauges"></div>
       <svg id="scene" viewBox="0 0 1000 600" data-s="oeuf"></svg>
+      <div class="mg" id="mg" hidden><svg id="mgs" viewBox="0 0 1000 600"></svg><button class="chip mini mgskip" id="mg-skip" type="button">Passer</button></div>
+      <div class="st" id="st" hidden><div class="stp"><div class="stpips" id="st-p"></div><div class="stbar"><i class="sty" id="st-y"></i><i class="stg" id="st-g"></i><b class="stc" id="st-c"></b></div></div><button class="chip mini mgskip" id="st-skip" type="button">Passer</button></div>
     </div>
     <div class="row">
-      <div class="evo"><div class="t"><span>Évolution</span><span id="e-next"></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
+      <div class="evo"><div class="t"><span>Évolution</span><span><span class="capm" id="e-cap" hidden title="Assez joué pour aujourd'hui : plus de points avant demain"></span><span id="e-next"></span></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
       <div class="tray" id="tray"></div>
     </div>
     <div class="actions" id="actions"></div>
@@ -319,8 +342,36 @@ function ruin(x,w,h,c){let s=`<g transform="translate(${x},-46)"><path class="o"
 function fire(x,y,sc=1){return `<g transform="translate(${x},${y}) scale(${sc})"><circle class="smk" cx="0" cy="-34" r="13" fill="#6b6385"/><circle class="smk" style="animation-delay:-1.2s" cx="10" cy="-30" r="11" fill="#8a84a3"/><circle class="smk" style="animation-delay:-2.4s" cx="-10" cy="-30" r="10" fill="#57506f"/>
 <g class="flm"><path class="o3" d="M0 0 C-16 0,-18 -16,-9 -26 C-9 -18,-4 -16,-3 -20 C-4 -30,2 -38,7 -42 C5 -32,16 -26,15 -12 C14 -4,8 0,0 0 Z" fill="#ff7a2e"/><path d="M1 -2 C-8 -2,-9 -12,-3 -17 C-2 -12,2 -13,3 -22 C8 -16,10 -10,8 -6 C7 -3,4 -2,1 -2 Z" fill="#ffe14d"/></g></g>`}
 
+
+
+/* ---------- la ville : niveaux, immeubles, états ---------- */
+// st = indice du stade requis (2 ado, 3 adulte, 4 titan), N = immeubles, pv = points de vie, h = hauteurs, pal = palettes de PAL
+const LV=[null,
+ {n:'Hameau',st:2,N:6,pv:1,h:[95,150],pal:[1,6,3]},
+ {n:'Village',st:2,N:10,pv:2,h:[110,200],pal:[0,1,6,3]},
+ {n:'Petite ville',st:3,N:14,pv:4,h:[120,250],pal:[2,5,0,7,3]},
+ {n:'Port',st:3,N:16,pv:6,h:[130,290],pal:[5,6,3,1,0]},
+ {n:'Capitale',st:4,N:20,pv:10,h:[140,330],pal:[2,7,4,0,5,1]}];
+function lvInfo(l){if(l<=5)return LV[l];const n=l-5;
+ return {n:'Mégapole '+n,st:4,N:20,pv:Math.round(10*Math.pow(1.4,n)),h:[140,330],pal:[l%8,(l+2)%8,(l+4)%8,(l+5)%8,(l+7)%8]}}
+// les immeubles d'un niveau : {id,x,w,h,col,seed,pvMax}, toujours les mêmes pour un niveau donné
+const _cd={};
+function cityDefs(l){if(_cd[l])return _cd[l];const I=lvInfo(l),R=mb(700+l*97),step=Math.max(58,Math.min(130,1180/I.N)),out=[];let x=I.N<=10?-140:-216;
+ while(out.length<I.N){const w=Math.min(94,Math.round(step*(.62+R()*.3)));
+  if(l>=5&&x+w>330&&x<378){x=388;continue}
+  const h=Math.round(I.h[0]+R()*(I.h[1]-I.h[0])+(l>=3&&R()<.2?60:0));
+  out.push({id:'b'+out.length,x:Math.round(x),w,h,col:I.pal[Math.floor(R()*I.pal.length)],seed:Math.floor(R()*1e6),pvMax:I.pv});x+=step+R()*8}
+ return _cd[l]=out}
+const pvOf=(B,pvs)=>pvs&&pvs[B.id]!=null?pvs[B.id]:B.pvMax;
+function cracks(B){const R=mb(B.seed+5),w=B.w,h=B.h;let s=`<g transform="translate(${B.x},-46)" fill="none">`;
+ for(let k=0;k<3;k++){let x=w*(.18+.3*k)+R()*8,y=-h+4,d=`M${f(x)} ${f(y)}`;for(let j=0;j<5;j++){x+=(R()-.5)*16;y+=14+R()*18;d+=` L${f(x)} ${f(y)}`}s+=`<path class="o2" d="${d}"/>`}
+ return s+`<circle class="smk" cx="${f(w*.35)}" cy="${-h-6}" r="9" fill="#8a84a3"/><circle class="smk" style="animation-delay:-1.7s" cx="${f(w*.62)}" cy="${-h-6}" r="7" fill="#6b6385"/></g>`}
+// dessin d'un immeuble selon ses points de vie : intact, fissuré, ruine en flammes
+function bldSvg(B,pv){const c=PAL[B.col];
+ if(pv<=0)return ruin(B.x,B.w,B.h,c)+fire(B.x+B.w*.5,-46-B.h+38,.7+B.w/150);
+ return building(B.x,B.w,B.h,c,mb(B.seed))+(pv<B.pvMax?cracks(B):'')}
 /* ---------- le monde ---------- */
-function world(){const R=mb(11);let b='',fg='';
+function world(lv=1,pvs={}){const R=mb(11+lv*31);let b='',fg='';
  // sol, plage, mer
  b+=`<rect x="-360" y="-52" width="1500" height="362" fill="url(#gGrass)"/>`;
  for(let i=0;i<40;i++)b+=`<ellipse cx="${f(-250+R()*1500)}" cy="${f(10+R()*300)}" rx="${f(30+R()*50)}" ry="${f(5+R()*6)}" fill="#8fe06a" opacity=".5"/>`;
@@ -339,23 +390,14 @@ function world(){const R=mb(11);let b='',fg='';
  b+=lighthouse(-352,-50);
  // immeubles
  b+=ruin(-288,62,196,PAL[4]);
- let i=0;for(let x=-216;x<1070;){if(x>312&&x<372){b+=tower(352);x=388;continue}
-  const w=50+R()*44,h=Math.round(110+R()*200+(R()<.2?70:0));b+=building(x,w,h,PAL[(i*3+Math.floor(R()*3))%8],R);i++;x+=w+(R()<.3?16:1)}
- b+=wheel(840);
+ cityDefs(lv).forEach(B=>{b+=`<g data-b="${B.id}">${bldSvg(B,pvOf(B,pvs))}</g>`});if(lv>=5)b+=tower(352);
+ if(lv>=5)b+=wheel(840);
  // arbres, lampadaires, passants du trottoir
  for(let x=-270;x<1080;x+=70+R()*60)b+=tree(x,-42,.85+R()*.3,Math.floor(R()*3));
  for(let x=-240;x<1080;x+=150)b+=lamp(x,-41);
- const ps=[];for(let k=0;k<26;k++){const x=100+R()*950;ps.push(person(x,-41,k,R()<.8?1:-1,.9))}
- for(let k=0;k<5;k++)ps.push(person(-300+R()*60,-41,k+3,-1,.9));b+=grp(ps);
- // véhicules
- b+=car(-262,-29,'#4db8ff',-1)+car(196,-29,'#ffd23f',-1)+bus(380,-29,'#ff5a5a',-1)+car(560,-29,'#b58cff',-1)+car(720,-29,'#5ed36a',-1)+car(905,-29,'#ff8fc0',-1);
- b+=car(-150,-15,'#ff9a3c',1)+car(270,-15,'#ff5a5a',1)+car(450,-15,'#fff',1)+car(640,-15,'#4db8ff',1)+bus(800,-15,'#ffd23f',1)+car(980,-15,'#5ed36a',1);
- // bateaux
- b+=cargo(-640,-34,1,3)+cargo(-930,-40,.7,8)+sail(-430,-20,1,'#ff8fc0')+sail(-540,70,1.2,'#5ed36a')+sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
- // hélicoptères
- b+=heli(262,-338,1,'#ff9320',0)+heli(-700,-330,1.5,'#4db8ff',.6)+heli(720,-700,1.5,'#ff5a8a',1.1);
+ if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
  // dégâts
- b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g><g class="prop p-titan">${fire(900,-190,2.6)}${fire(980,-150,2.2)}${fire(640,-170,2)}</g>`;
+ b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g>`;
  // passants sur l'herbe
  const pb=[],pf=[];for(let k=0;k<22;k++){const x=150+R()*420,y=-8+R()*22;(y<0?pb:pf).push(person(x,y,k+2,1))}
  for(let k=0;k<8;k++){const x=-250-R()*40,y=2+R()*14;pf.push(person(x,y,k,-1))}
@@ -651,18 +693,16 @@ ${cloud(170,120,1.1,3)}${cloud(480,86,.8,11)}${cloud(660,190,.7,6)}${cloud(940,2
 <path d="M0 450 L0 380 C80 340,160 350,240 384 C320 350,420 340,520 380 C620 344,720 350,820 384 C900 356,960 360,1000 372 L1000 450 Z" fill="#8fd6a0"/>
 <path d="M0 470 L0 410 C120 384,220 392,330 414 C460 388,560 392,680 414 C800 392,900 394,1000 408 L1000 470 Z" fill="#74c98a"/>
 <g id="world">${wb}</g>
-<g class="prop p-bebe"><g class="fly">${butterfly(640,360,'#ff8fc0','#ffd23f',1.5)}</g><g class="fly" style="animation-delay:-2s">${butterfly(330,250,'#7cc8ff','#b58cff',1.2)}</g><g class="fly" style="animation-delay:-3.4s">${butterfly(760,250,'#ffd23f','#ff9a3c',1)}</g></g>
+<g id="prey"></g>
 <g id="mon"></g>
 <g id="worldF">${wf}</g>
-<g class="prop p-bebe">${apple(662,500,1.5)}${apple(716,512,1.2)}${ladybug(300,508,1.4)}</g>
-<g class="prop p-ado">${cow(742,500,1.9,1)}<text x="690" y="372" font-size="54" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="3" paint-order="stroke">!</text></g>
 <g class="prop p-titan"><polygon points="${star(915,372,60,30,11)}" fill="#fff" stroke="${L}" stroke-width="3"/><polygon points="${star(915,372,44,20,11)}" fill="#ffd23f"/><polygon points="${star(915,372,26,12,11)}" fill="#ff7a2e"/></g>
 <rect id="night" width="1000" height="600" fill="#1a1450" opacity="0"/><g id="fx"></g><g id="bub"></g><g id="pop"></g>`;
-const W=document.getElementById('world'),WF=document.getElementById('worldF'),MON=document.getElementById('mon');
+const PB=document.getElementById("prey"),W=document.getElementById("world"),WF=document.getElementById('worldF'),MON=document.getElementById('mon');
 let zCur=null,raf=0;
 function zoomTo(z){const from=zCur||z,t0=performance.now();cancelAnimationFrame(raf);
  const step=t=>{let u=from==z?1:Math.min(1,Math.max(0,(t-t0)/1000));u=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;zCur=from*Math.pow(z/from,u);
-  [W,WF].forEach(g=>{g.setAttribute('transform',`translate(500,470) scale(${zCur.toFixed(4)})`);g.style.setProperty('--k',Math.pow(zCur,-.82).toFixed(3))});
+  [W,WF,PB].forEach(g=>{g.setAttribute('transform',`translate(500,470) scale(${zCur.toFixed(4)})`);g.style.setProperty('--k',Math.pow(zCur,-.82).toFixed(3))});
   if(u<1)raf=requestAnimationFrame(step)};step(t0)}
 
 /* ---------- le jeu ---------- */
@@ -674,30 +714,59 @@ const FOODS={
  ado:[['cow','Vache',24,14],['tree','Arbre',16,9],['car','Voiture',30,18],['lamp','Lampadaire',10,6]],
  adulte:[['boat','Bateau',26,32],['heli','Hélicoptère',20,26],['crowd','Foule ×10',14,18],['bus','Bus',32,40]],
  titan:[['building','Immeuble',22,60],['cargo','Cargo',28,80],['district','Quartier',40,150]]};
-const NEED={oeuf:60,bebe:80,ado:260,adulte:700,titan:0};
+// points nécessaires pour quitter le stade, durée minimale (en jours) dans le stade, plafond de points par jour
+const NEED={oeuf:60,bebe:150,ado:600,adulte:2000,titan:0};
+const MINAGE={oeuf:0,bebe:1,ado:3,adulte:6,titan:0};
+const CAP={bebe:80,ado:220,adulte:400};
+const DAYMS=864e5,DEBUG_SPEED=1; // DEBUG_SPEED multiplie l'écoulement du temps (tests uniquement)
 const BASEW={oeuf:2,bebe:12,ado:900,adulte:60000,titan:2e7};
 const MIAM={bebe:['MIAM !','GLOUPS !','SLURP !'],ado:['SCRONCH !','CROC !','MIAM !'],adulte:['CROUNCH !','GLOUPS !','SCRATCH !'],titan:['GRAOUUU !','CROUNCH !','BROUM !']};
 const BUB={oeuf:[660,300],bebe:[650,255],ado:[690,190],adulte:[285,160],titan:[180,330]};
 ['moon','soap','ball'].forEach(n=>IC[n]=['0 0 48 48',UI[n]]);
+$('e-cap').innerHTML=ui('moon');
 const GA=[['faim','meat','Faim','#ffb199','#ff5f3d'],['humeur','heart','Humeur','#ff9ecb','#ff4f8b'],['energie','bolt','Énergie','#ffe98a','#ffb800'],['propre','drop','Propreté','#9fe0ff','#2f9cf0']];
 $('gauges').innerHTML=GA.map(g=>`<div class="gauge" id="g-${g[0]}"><div class="ic">${ui(g[1])}</div><div class="trk"><div class="fill" style="width:0%;--g1:${g[3]};--g2:${g[4]}"></div><div class="lbl"><span>${g[2]}</span><span class="pc"></span></div></div></div>`).join('');
 const AC=[['feed','meat','Nourrir','#ffb36b','#f2681f'],['play','ball','Jouer','#8be08a','#2fa84f'],['sleep','moon','Dormir','#9d8cff','#5a45d6'],['wash','soap','Laver','#7fd4ff','#1f8fe0'],['destroy','boom','Détruire','#ff8a7a','#e02d4f']];
 $('actions').innerHTML=AC.map(a=>`<button class="btn" data-a="${a[0]}" style="--b1:${a[3]};--b2:${a[4]}">${ui(a[1])}<span>${a[2]}</span><svg class="lock" viewBox="0 0 30 30">${UI.lock}</svg></button>`).join('');
 $('species').innerHTML=D.map((d,i)=>{const vb=d.vb.join(' ');return `<div class="card" data-i="${i}" style="--cb:${d.cb}"><svg viewBox="${vb}">${rays(vb)}${mon(d,'adulte','p',false)}</svg><div class="n">${d.name}</div><div class="a">${d.tag}</div></div>`}).join('');
 
-let S=null,CUR=null,bubKey=null,popT=0,lockT=0;
+let S=null,CUR=null,bubKey=null,popT=0,lockT=0,mini=false; // mini : un mini-jeu est ouvert
 const clamp=v=>Math.max(0,Math.min(100,v)),idx=()=>ORDER.indexOf(S.stage),rnd=a=>a[Math.floor(Math.random()*a.length)];
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&D[s.mon]&&ST[s.stage])return s}catch(e){}return null}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v==1&&D[s.mon]&&ST[s.stage]){
+  // valeurs par défaut des données ajoutées après la v1
+  if(s.since==null)s.since=Date.now();
+  if(s.care==null)s.care=50;
+  if(s.dayK==null)s.dayK=-1;
+  if(s.dayXp==null)s.dayXp=0;
+  if(!s.best)s.best={catch:0};
+  if(!s.city||!s.city.pv||!(s.city.niveau>=1))s.city={niveau:1,pv:{}};
+  return s}}catch(e){}return null}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 /* le temps qui passe, page ouverte ou fermée */
-function decay(dt){if(S.stage=='oeuf'||dt<=0)return;dt=Math.min(dt,12*3600);
+function decayStep(dt){dt=Math.min(dt,12*3600);
  if(S.asleep){const full=(100-S.energie)*3,d=Math.min(dt,full);S.energie=clamp(S.energie+d/3);S.faim=clamp(S.faim-d/90);dt-=d;if(S.energie>=100)S.asleep=false;if(dt<=0)return}
  const sad=(S.faim<20||S.propre<20)?2:1;
  S.faim=clamp(S.faim-dt/45);S.humeur=clamp(S.humeur-dt*sad/60);S.energie=clamp(S.energie-dt/90);S.propre=clamp(S.propre-dt/120)}
+// off = page fermée : aucune jauge ne descend sous 15 (si elle était déjà plus bas, elle ne bouge pas)
+function decay(dt,off){if(S.stage=='oeuf'||dt<=0)return;const old=GA.map(g=>S[g[0]]);decayStep(dt);
+ if(off)GA.forEach((g,i)=>{S[g[0]]=Math.max(S[g[0]],Math.min(old[i],15))})}
+// soins : moyenne glissante des quatre jauges, relevée à chaque visite
+function visite(){if(S.stage=='oeuf')return;const m=GA.reduce((a,g)=>a+S[g[0]],0)/4;S.care=Math.round(clamp(S.care*.8+m*.2))}
+
+/* rythme : points, plafond quotidien, durée minimale dans le stade */
+const dayNo=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/(DAYMS/DEBUG_SPEED));
+function gain(n){const cap=CAP[S.stage];if(!cap){S.xp+=n;return n}
+ const d=dayNo();if(S.dayK!=d){S.dayK=d;S.dayXp=0}
+ const g=Math.max(0,Math.min(n,cap-S.dayXp));S.dayXp+=g;S.xp+=g;return g}
+const capped=()=>{const cap=CAP[S.stage];return !!cap&&S.dayK==dayNo()&&S.dayXp>=cap};
+const ageLeft=()=>MINAGE[S.stage]*DAYMS-(Date.now()-S.since)*DEBUG_SPEED; // ms virtuelles restantes
+const ready=()=>NEED[S.stage]>0&&S.xp>=NEED[S.stage]&&ageLeft()<=0;
+function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/6e4)),d=Math.floor(m/1440),h=Math.floor(m%1440/60),mi=m%60;
+ return 'encore '+(d?d+' j '+h+' h':h?h+' h '+mi+' min':mi+' min')}
 
 /* affichage */
-function weight(){const k=S.stage,n=NEED[k],w=n?BASEW[k]+(BASEW[ORDER[idx()+1]]-BASEW[k])*Math.pow(S.xp/n,2):BASEW.titan+S.xp*4000;
+function weight(){const k=S.stage,n=NEED[k],w=n?BASEW[k]+(BASEW[ORDER[idx()+1]]-BASEW[k])*Math.pow(Math.min(1,S.xp/n),2):BASEW.titan+S.xp*4000;
  return w<1000?Math.round(w)+' kg':(w/1000).toLocaleString('fr-FR',{maximumFractionDigits:w<1e5?1:0})+' t'}
 function mouth(){const p=ST[S.stage],d=CUR;return S.stage=='oeuf'?[500,470-p.m*100]:[500+p.m*(d.H[0]*p.bs+85*p.hs),470+p.m*(d.H[1]*p.bs-(1-p.bs)*(d.lift||0)+25*p.hs)]}
 function need(){if(S.asleep)return 'zz';if(S.stage=='oeuf')return 'heart';
@@ -712,16 +781,16 @@ function hud(){const k=S.stage,p=ST[k],isEgg=k=='oeuf';
  GA.forEach(g=>{const v=isEgg?100:S[g[0]],e=$('g-'+g[0]);e.querySelector('.fill').style.width=v.toFixed(0)+'%';e.querySelector('.pc').textContent=isEgg?'':v.toFixed(0)+' %';e.classList.toggle('low',v<25)});
  const cs=$('c-stage');cs.textContent=CUR.name+' · '+p.n;cs.style.setProperty('--sc',p.col);
  $('c-day').innerHTML=`Jour <b>${Math.floor((Date.now()-S.born)/864e5)+1}</b>`;$('c-w').innerHTML=`Poids <b>${weight()}</b>`;
- $('c-d').innerHTML=`Dégâts <b>${S.dmg?S.dmg+(S.dmg>1?' immeubles':' immeuble'):'aucun'}</b>`;
- $('e-next').textContent=p.next;$('e-bar').style.width=(NEED[k]?Math.min(100,100*S.xp/NEED[k]):100)+'%';
+ $('c-d').innerHTML=`Ville <b>${lvInfo(S.city.niveau).n} ${ruined()}/${cityList().length}</b>`;
+ $('e-next').textContent=NEED[k]&&S.xp>=NEED[k]&&ageLeft()>0?fmtLeft(ageLeft()):p.next;$('e-cap').hidden=!capped();$('e-bar').style.width=(NEED[k]?Math.min(100,100*S.xp/NEED[k]):100)+'%';
  $('scene').classList.toggle('sleep',!!S.asleep);
- document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<3));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
+ document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<2));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
  $('tray').classList.toggle('off',!!S.asleep);drawBubble()}
 function drawTray(){$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.stage].map((m,i)=>`<button class="food" data-i="${i}">${ic(m[0])}<div><div class="n">${m[1]}</div><div class="v">${S.stage=='oeuf'?(i?'+ humeur':'éclosion'):'+'+m[2]+' faim'}</div></div></button>`).join('')}
 function drawAlbum(){const n=idx();$('stages').innerHTML=ORDER.map((k,i)=>{const p=ST[k],ok=i<=n;return `<div class="card album${i==n?' on':''}${ok?'':' lock'}" style="--cb:${p.cb}"><svg viewBox="${p.vb}">${rays(p.vb)}<g class="sil">${k=='oeuf'?egg('c',CUR):mon(CUR,k,'c',false)}</g></svg><div class="n">${ok?p.n:'???'}</div><div class="a">${ok?p.short:'à découvrir'}</div></div>`}).join('')}
 function drawMon(){const k=S.stage,p=ST[k];$('scene').dataset.s=k;zoomTo(p.z);
  MON.setAttribute('transform',`translate(500,470) scale(${p.m})`);MON.innerHTML=`<g id="act"><g class="popin">${k=='oeuf'?egg('s',CUR):mon(CUR,k,'s',true)}</g></g>`}
-function drawAll(){drawMon();drawTray();drawAlbum();bubKey=null;hud()}
+function drawAll(){drawMon();syncPrey();drawTray();drawAlbum();bubKey=null;hud()}
 
 /* effets */
 function pop(t){const [x,y]=ST[S.stage].pop,P=$('pop');clearTimeout(popT);
@@ -730,13 +799,14 @@ function pop(t){const [x,y]=ST[S.stage].pop,P=$('pop');clearTimeout(popT);
 function react(c){const a=$('act');if(!a)return;a.setAttribute('class','');a.getBoundingClientRect();a.setAttribute('class',c)}
 function fx(html,frames,ms){const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.innerHTML=html;$('fx').appendChild(g);
  const end=()=>g.remove(),an=g.animate?g.animate(frames,{duration:ms,easing:'ease-in',fill:'forwards'}):null;if(an)an.onfinish=end;setTimeout(end,ms+80)}
-function fly(n){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3]),[mx,my]=mouth();
+function fly(n,sx,sy){const v=IC[n][0].split(' ').map(Number),k=90/Math.max(v[2],v[3]),[mx,my]=mouth();
+ const ax=sx==null?mx+330:sx,ay=sy==null?my+170:sy,bx=sx==null?mx+150:mx+(ax-mx)*.4,by=sx==null?my-40:my+(ay-my)*.4-50; // départ : hors champ, ou la position de la proie cliquée
  fx(`<svg x="${-v[2]*k/2}" y="${-v[3]*k/2}" width="${v[2]*k}" height="${v[3]*k}" viewBox="${IC[n][0]}" style="--k:1.4">${IC[n][1]}</svg>`,
-  [{transform:`translate(${f(mx+330)}px,${f(my+170)}px) scale(1)`},{transform:`translate(${f(mx+150)}px,${f(my-40)}px) scale(.9)`,offset:.55},{transform:`translate(${f(mx)}px,${f(my)}px) scale(.25)`}],480)}
+  [{transform:`translate(${f(ax)}px,${f(ay)}px) scale(1)`},{transform:`translate(${f(bx)}px,${f(by)}px) scale(.9)`,offset:.55},{transform:`translate(${f(mx)}px,${f(my)}px) scale(.25)`}],480)}
 function bubbles(){const p=ST[S.stage],h=p.m*p.bs*300,w=p.m*p.bs*170;for(let i=0;i<14;i++){const x=500+(Math.random()*2-1)*w,y=470-Math.random()*h,r=8+Math.random()*14;
  fx(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="#fff" opacity=".65" stroke="#9fe0ff" stroke-width="3"/><circle cx="${f(x-r*.3)}" cy="${f(y-r*.3)}" r="${f(r*.25)}" fill="#fff"/>`,
   [{transform:'translateY(20px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.25},{transform:'translateY(-90px)',opacity:0}],700+Math.random()*600)}}
-function boom(){const x=600+Math.random()*320,y=300+Math.random()*130;
+function boom(x,y){if(x==null){x=600+Math.random()*320;y=300+Math.random()*130}
  fx(`<g transform="translate(${f(x)},${f(y)})"><polygon points="${star(0,0,70,34,11)}" fill="#fff" stroke="${L}" stroke-width="3"/><polygon points="${star(0,0,50,22,11)}" fill="#ffd23f"/><polygon points="${star(0,0,30,13,11)}" fill="#ff7a2e"/></g>`,
   [{opacity:1},{opacity:1,offset:.7},{opacity:0}],650);
  const sc=$('screen');sc.classList.remove('shake');sc.getBoundingClientRect();sc.classList.add('shake')}
@@ -744,36 +814,214 @@ function flash(){fx(`<rect width="1000" height="600" fill="#fff"/>`,[{opacity:1}
 
 /* actions */
 const busy=()=>Date.now()<lockT||(lockT=Date.now()+420,false);
-function evolve(){const k=S.stage,n=NEED[k];if(!n||S.xp<n)return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;
+function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.stage=ORDER[idx()+1];S.want=0;S.since=Date.now();cityAdvance();
  if(k=='oeuf')Object.assign(S,{faim:60,humeur:80,energie:80,propre:100});else S.humeur=clamp(S.humeur+20);
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
 function refuse(t){pop(t);react('no')}
-function feed(i){const k=S.stage,fo=FOODS[k];if(busy())return;
- if(k=='oeuf'){S.xp+=fo[i][3];if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');return done()}
- if(S.asleep)return pop('ZZZ…');
+function feed(i,src){const k=S.stage,fo=FOODS[k];if(mini||busy())return false;
+ if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');done();return true}
+ if(S.asleep){pop('ZZZ…');return false}
  if(i==null){const w=need();i=fo.findIndex(m=>m[0]==w);if(i<0)i=Math.floor(Math.random()*fo.length)}
- if(S.faim>=96)return refuse('BEURK !');
- const m=fo[i],wanted=need()==m[0];fly(m[0]);
- setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);S.xp+=m[3];S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
-  react('chomp');pop(rnd(MIAM[k]));done()},430)}
-function play(){if(busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');
- S.humeur=clamp(S.humeur+18);S.energie=clamp(S.energie-10);S.faim=clamp(S.faim-6);S.xp+=2+idx()*2;react('jump');pop(rnd(['YOUPI !','BOING !','HIHI !']));done()}
+ if(S.faim>=96){refuse('BEURK !');return false}
+ const m=fo[i],wanted=need()==m[0];fly(m[0],src&&src[0],src&&src[1]);
+ setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
+  react('chomp');pop(rnd(MIAM[k]));done()},430);return true}
+function play(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');startCatch()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
-function destroy(){if(idx()<3||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
- S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);S.xp+=S.stage=='titan'?70:30;S.dmg++;react('jump');boom();pop(rnd(['BOUM !','CRAAAC !','BADABOUM !']));done()}
+const HIT={ado:1,adulte:3,titan:8}; // dégâts par coup
+function destroy(){if(idx()<2||mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<15)return refuse('PFFF…');
+ if(!nearest())return refuse('HMPF…'); // rien à détruire : la ville est rasée, la suivante attend un stade plus grand
+ startStrike()}
 const DO={feed:()=>feed(null),play,sleep,wash,destroy};
 
+/* ---------- la ville destructible : état, dégâts, niveaux ---------- */
+const cityList=()=>cityDefs(S.city.niveau);
+const pvNow=B=>pvOf(B,S.city.pv);
+const standing=()=>cityList().filter(B=>pvNow(B)>0);
+const ruined=()=>cityList().length-standing().length;
+// l'immeuble debout le plus proche du monstre (qui se tient en x = 0)
+function nearest(){let best=null,bd=1e9;cityList().forEach(B=>{if(pvNow(B)<=0)return;const d=Math.abs(B.x+B.w/2);if(d<bd){bd=d;best=B}});return best}
+// la ville entière est redessinée seulement quand le niveau change ; un immeuble se redessine seul dans son <g data-b>
+function buildWorld(){const [b,fg]=world(S.city.niveau,S.city.pv);W.innerHTML=b;WF.innerHTML=fg}
+function redrawB(B){const g=W.querySelector(`[data-b="${B.id}"]`);if(g)g.innerHTML=bldSvg(B,pvNow(B))}
+// position de l'immeuble à l'écran (repère 1000 x 600), pour placer l'éclat
+function bScreen(B){const z=zCur||1;return [Math.max(70,Math.min(930,500+z*(B.x+B.w/2))),Math.max(70,Math.min(530,470+z*(-46-B.h/2)))]}
+// enlève des points de vie ; renvoie vrai si l'immeuble tombe en ruine
+function hitB(B,dmg){S.city.pv[B.id]=Math.max(0,pvNow(B)-dmg);redrawB(B);
+ if(S.city.pv[B.id]>0)return false;S.dmg++;gain(8+B.pvMax*5);return true}
+// un coup sur l'immeuble le plus proche ; gère l'éclat, le mot et la fin de ville
+function strikeCity(dmg,word){const B=nearest();if(!B)return null;const [x,y]=bScreen(B),dead=hitB(B,dmg);boom(x,y);
+ pop(word||(dead?rnd(['BOUM !','CRAAAC !']):'CRAC !'));if(dead&&!standing().length)cityCleared();return {B,dead}}
+function cityCleared(){const l=S.city.niveau;gain(40+20*l);S.humeur=clamp(S.humeur+25);pop('BADABOUM !');flash();cityAdvance()}
+// passe à la ville suivante quand tout est rasé et que le stade du monstre le permet
+function cityAdvance(){if(standing().length)return false;const n=S.city.niveau+1;if(idx()<lvInfo(n).st)return false;
+ S.city={niveau:n,pv:{}};buildWorld();return true}
+/* ---------- proies mobiles cliquables dans le décor ---------- */
+// Objets {type,x,y,dir,v}, déplacés par requestAnimationFrame dans le groupe #prey (attribut transform, jamais de CSS).
+// f = nom de la proie dans FOODS (null : simple passant), r = rayon de clic, cy = hauteur du centre, v = vitesse en pixels d'écran par seconde,
+// m = mode (wrap : traverse puis réapparaît de l'autre côté, bounce : fait demi-tour, leap : saute en arc), art = sens du dessin (1 = regarde à droite)
+const CARC=['#4db8ff','#ffd23f','#b58cff','#5ed36a','#ff8fc0','#ff9a3c','#ff5a5a','#ffffff'],ri=n=>Math.floor(Math.random()*n);
+const crowdSp=()=>`<g class="run">`+person(-12,0,ri(8),1)+person(12,0,ri(8),1)+person(0,2,ri(8),1)+`</g>`;
+const MV={
+ butterfly:{f:'butterfly',r:26,cy:0,v:42,m:'wrap',art:1,y:()=>-85+Math.random()*60,sp:()=>butterfly(0,0,rnd(['#ff8fc0','#7cc8ff','#ffd23f']),rnd(['#ffd23f','#b58cff','#ff9a3c']),1.15)},
+ ladybug:{f:'ladybug',r:24,cy:-11,v:7,m:'bounce',art:1,y:()=>6+Math.random()*18,sp:()=>ladybug(0,0,1.3)},
+ apple:{f:'apple',r:24,cy:-19,v:11,m:'bounce',art:1,spin:1,y:()=>8+Math.random()*18,sp:()=>apple(0,0,1.3)},
+ fish:{f:'fish',r:32,cy:0,m:'leap',art:1,sp:()=>fish(0,0,1.4)},
+ cow:{f:'cow',r:46,cy:-26,v:9,m:'bounce',art:-1,y:()=>-2+Math.random()*12,sp:()=>cow(0,0,1,1)},
+ car:{f:'car',r:42,cy:-18,v:68,m:'wrap',art:1,lane:()=>rnd([[-29,-1],[-15,1]]),sp:()=>car(0,0,rnd(CARC),1,1)},
+ bus:{f:'bus',r:56,cy:-22,v:52,m:'wrap',art:1,lane:()=>rnd([[-29,-1],[-15,1]]),sp:()=>bus(0,0,rnd(CARC),1)},
+ walker:{f:null,r:14,cy:-10,v:22,m:'wrap',art:1,lane:()=>[-41,rnd([-1,1])],sp:()=>`<g class="run">`+person(0,0,ri(8),1,.9)+`</g>`},
+ crowd:{f:'crowd',r:28,cy:-12,v:20,m:'wrap',art:1,lane:()=>[-41,rnd([-1,1])],sc:()=>1.15,sp:crowdSp},
+ boat:{f:'boat',r:50,cy:-40,v:18,m:'bounce',art:1,lane:()=>{const y=rnd([-20,40,100,160,220]);return [y,rnd([-1,1])]},sc:o=>1+(o.y+20)/700,
+  bounds:hw=>[Math.max(-1050,-hw-170),-390],sp:()=>sail(0,0,1,rnd(['#ff8fc0','#5ed36a','#ffd23f','#b58cff','#ff9a3c']))},
+ heli:{f:'heli',r:70,cy:-14,v:55,m:'wrap',art:-1,y:()=>-420+Math.random()*150,sc:()=>1+Math.random()*.5,sp:()=>heli(0,0,1,rnd(['#ff9320','#4db8ff','#ff5a8a']),Math.random()*2)},
+ cargo:{f:'cargo',r:150,cy:-60,v:9,m:'bounce',art:1,lane:()=>rnd([[-34,1],[-40,1]]),sc:o=>o.y==-40?.7:1,bounds:hw=>[-1050,-480],sp:()=>cargo(0,0,1,ri(20))},
+ district:{f:'district',r:100,cy:-55,v:7,m:'bounce',art:1,y:()=>-30,bounds:hw=>[-980,-500],
+  sp:()=>`<path class="o" d="M-104 -10 L104 -10 L86 8 L-86 8 Z" fill="#8a84a3"/><g transform="translate(-88,-8)">${IC.district[1]}</g>`}
+};
+// population par stade : [type, nombre] (douze objets mobiles au plus)
+const POP={bebe:[['butterfly',3],['ladybug',2],['apple',2],['fish',1]],ado:[['cow',2],['car',3],['bus',1],['walker',2]],
+ adulte:[['boat',2],['heli',2],['crowd',2],['bus',2],['car',3]],titan:[['cargo',2],['district',1],['car',3],['bus',1],['boat',2],['heli',1]]};
+const MAXMV=12,EDGE=170;
+let PR=[],preyStage=null,preyRaf=0,preyT=0,pid=0;
+
+function spawn(type,edge){if(PR.filter(o=>!o.gone).length>=MAXMV)return null;
+ const M=MV[type],z=ST[preyStage].z,hw=500/z,o={id:++pid,type,f:M.f,tm:Math.random()*9,ph:Math.random()*6.28,rot:0,gone:false};
+ let ln=M.lane?M.lane():[M.y?M.y():0,rnd([-1,1])];o.y=ln[0];o.dir=ln[1];o.sc=M.sc?M.sc(o):1;o.cy=M.cy*o.sc;o.r=M.r*o.sc;o.y0=o.y;o.v=(M.v||0)/z;
+ o.live=!!M.f&&FOODS[preyStage].some(m=>m[0]==M.f); // seules les proies du stade sont cliquables
+ const hit=Math.max(o.r,23/z); // zone de clic : au moins 44 px à l'écran, quel que soit le zoom
+ if(M.m=='wrap'){const lim=hw+EDGE+o.r;o.lim=lim;o.x=edge?-o.dir*lim:(Math.random()*2-1)*hw}
+ else if(M.m=='bounce'){const b=M.bounds?M.bounds(hw):[-hw+25,hw-25];o.lo=b[0];o.hi=b[1];o.x=edge?(o.dir>0?o.lo:o.hi):o.lo+Math.random()*(o.hi-o.lo)}
+ else{o.u=Math.random();o.dur=1.6;o.wait=0;leapNew(o,hw)}
+ const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','mv');g.dataset.id=o.id;g.style.pointerEvents='none';
+ g.innerHTML=(o.live?`<circle class="halo pulse" cx="0" cy="${f(o.cy)}" r="${f(Math.max(o.r*.9,19/z))}" fill="#fff6a0" fill-opacity=".4" stroke="#fff" style="stroke-width:calc(var(--k)*2.4px)"/>`:'')+`<g class="fl">${M.sp()}</g>`+(o.live?`<circle cx="0" cy="${f(o.cy)}" r="${f(hit)}" fill="#000" fill-opacity="0" style="pointer-events:all;cursor:pointer"/>`:'');
+ o.el=g;o.fl=g.querySelector('.fl');o.flKey='';PB.appendChild(g);PR.push(o);place(o);return o}
+function leapNew(o,hw){o.u=0;o.xa=(Math.random()*2-1)*(hw-40);o.dir=Math.random()<.5?-1:1;o.xb=o.xa+o.dir*(60+Math.random()*50);o.H=95;o.x=o.xa;o.y=42}
+function place(o){const M=MV[o.type];let a=o.rot,k=o.dir*M.art*o.sc+'|'+o.sc+'|'+a.toFixed(0);
+ o.el.setAttribute('transform',`translate(${o.x.toFixed(1)},${o.y.toFixed(1)})`);
+ if(k!=o.flKey){o.flKey=k;o.fl.setAttribute('transform',`scale(${o.dir*M.art*o.sc},${o.sc})`+(a?` rotate(${a.toFixed(1)} 0 ${(M.cy).toFixed(1)})`:''))}}
+function stepMover(o,dt,hw){const M=MV[o.type];o.tm+=dt;
+ if(M.m=='wrap'){o.x+=o.dir*o.v*dt;if(o.dir>0?o.x>o.lim:o.x<-o.lim)o.x=-o.dir*o.lim;if(M.f=='butterfly')o.y=o.y0+Math.sin(o.tm*2.2+o.ph)*12}
+ else if(M.m=='bounce'){o.x+=o.dir*o.v*dt;if(o.x>o.hi){o.x=o.hi;o.dir=-1}else if(o.x<o.lo){o.x=o.lo;o.dir=1}if(M.spin)o.rot=(o.rot+o.v*dt*3.2)%360}
+ else{if(o.wait>0){o.wait-=dt;o.el.style.display='none';if(o.wait<=0){leapNew(o,hw);o.el.style.display=''}return}
+  o.u+=dt/o.dur;if(o.u>=1){o.wait=.8+Math.random()*1.6;o.u=1}
+  const u=o.u;o.x=o.xa+(o.xb-o.xa)*u;o.y=42-4*o.H*u*(1-u);const vy=-4*o.H*(1-2*u)/o.dur,vx=Math.abs(o.xb-o.xa)/o.dur;o.rot=Math.atan2(vy,vx)*57.3}
+ place(o)}
+function preyTick(t){preyRaf=requestAnimationFrame(preyTick);const dt=Math.min(.05,Math.max(0,(t-preyT)/1000));preyT=t;
+ if(!preyStage)return;const hw=500/ST[preyStage].z;for(const o of PR)if(!o.gone)stepMover(o,dt,hw)}
+function preyRun(on){cancelAnimationFrame(preyRaf);preyRaf=0;if(on&&!document.hidden){preyT=performance.now();preyRaf=requestAnimationFrame(preyTick)}}
+function stopPrey(){preyRun(false);PR=[];preyStage=null;PB.innerHTML=''}
+// (re)crée les objets mobiles du stade courant ; sans effet si le stade n'a pas changé
+function syncPrey(force){if(!S||S.stage=='oeuf'){if(preyStage)stopPrey();return}
+ if(!force&&preyStage==S.stage&&PR.length)return;stopPrey();preyStage=S.stage;PB.innerHTML='';
+ (POP[S.stage]||[]).forEach(([t,n])=>{for(let i=0;i<n;i++)spawn(t,false)});preyRun(true)}
+// une proie mangée disparaît puis réapparaît au bord quelques secondes plus tard
+function eatMover(o){o.gone=true;o.el.remove();const st=preyStage,type=o.type;
+ PR=PR.filter(p=>p!==o);setTimeout(()=>{if(S&&preyStage==st)spawn(type,true)},3000+Math.random()*3000)}
+PB.addEventListener('pointerdown',e=>{const g=e.target.closest('.mv');if(!g||!S||S.stage=='oeuf'||mini)return;
+ const o=PR.find(p=>p.id==g.dataset.id);if(!o||!o.live)return;e.preventDefault();
+ const i=FOODS[S.stage].findIndex(m=>m[0]==o.f);if(i<0)return;
+ const z=zCur||1,sx=500+z*o.x,sy=470+z*(o.y+o.cy);if(feed(i,[sx,sy]))eatMover(o)});
+// au stade titan, les immeubles encore debout se mangent aussi d'un clic (proie « Immeuble »)
+W.addEventListener('pointerdown',e=>{if(!S||S.stage!='titan'||mini)return;const g=e.target.closest('[data-b]');if(!g)return;
+ const B=cityList().find(b=>b.id==g.dataset.b);if(!B||pvNow(B)<=0)return;const [sx,sy]=bScreen(B);
+ if(feed(0,[sx,sy])){hitB(B,1e9);boom(sx,sy);if(!standing().length)cityCleared()}});
+document.addEventListener('visibilitychange',()=>preyRun(!document.hidden&&!!preyStage));
+/* ---------- mini-jeu « Jouer » : attrape (20 secondes) ---------- */
+// Des objets tombent du haut ; le monstre suit le doigt ou la souris. Bons : ballons et proies du stade (+1). Mauvais : bombes et brocolis (-1).
+const CATCH_T=20,CATCH_Y=385,CATCH_HW=100,GROUND_Y=548;
+let CG=null;
+function balloonArt(col){return `<ellipse cx="0" cy="-2" rx="22" ry="27" fill="${col}" stroke="${L}" stroke-width="3.5"/><ellipse cx="-8" cy="-14" rx="5" ry="9" fill="#fff" opacity=".6" transform="rotate(20 -8 -14)"/><path d="M-5 28 L5 28 L0 22 Z" fill="${col}" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><path d="M0 29 q-7 11 0 21 q7 10 0 20" stroke="${L}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`}
+function bombArt(){return `<path d="M10 -20 q8 -12 17 -8" stroke="${L}" stroke-width="4" fill="none" stroke-linecap="round"/><polygon points="${star(30,-30,12,5,6)}" fill="#ffd23f" stroke="${L}" stroke-width="2"/><circle cx="0" cy="2" r="25" fill="#3a3152" stroke="${L}" stroke-width="3.5"/><ellipse cx="-9" cy="-8" rx="6" ry="9" fill="#fff" opacity=".35" transform="rotate(25 -9 -8)"/><rect x="-7" y="-27" width="14" height="8" rx="2" fill="#6b6385" stroke="${L}" stroke-width="3"/>`}
+function broccoliArt(){return `<path d="M-6 26 L-8 4 L8 4 L6 26 Z" fill="#b6e07a" stroke="${L}" stroke-width="3" stroke-linejoin="round"/><circle cx="-14" cy="-4" r="13" fill="#3fae55" stroke="${L}" stroke-width="3"/><circle cx="14" cy="-4" r="13" fill="#3fae55" stroke="${L}" stroke-width="3"/><circle cx="0" cy="-14" r="15" fill="#48c768" stroke="${L}" stroke-width="3"/><circle cx="-5" cy="-18" r="4" fill="#8ee89f"/>`}
+function preyArt(n){const v=IC[n][0].split(' ').map(Number),k=62/Math.max(v[2],v[3]);
+ return `<svg x="${f(-v[2]*k/2)}" y="${f(-v[3]*k/2)}" width="${f(v[2]*k)}" height="${f(v[3]*k)}" viewBox="${IC[n][0]}" style="--k:1.6">${IC[n][1]}</svg>`}
+function catchSpawn(){const k=CG.k,good=Math.random()<.62,x=70+Math.random()*860;let art,kind;
+ if(good){const fo=FOODS[k];if(Math.random()<.45){art=balloonArt(rnd(['#ff5a5a','#ffd23f','#4db8ff','#5ed36a','#ff8fc0','#b58cff']))}else art=preyArt(rnd(fo)[0]);kind=1}
+ else{art=Math.random()<.5?bombArt():broccoliArt();kind=-1}
+ const el=document.createElementNS('http://www.w3.org/2000/svg','g');el.innerHTML=`<g class="ro">${art}</g>`;CG.items.appendChild(el);
+ CG.list.push({el,x,y:-60,kind,rot:Math.random()*40-20,spin:(Math.random()-.5)*140,vy:(Math.random()*.25+.9)})}
+function catchFloat(x,y,txt,col){const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+ g.innerHTML=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" font-size="46" font-weight="800" fill="${col}" stroke="${L}" stroke-width="6" paint-order="stroke" stroke-linejoin="round">${txt}</text>`;CG.fx.appendChild(g);
+ const end=()=>g.remove();if(g.animate)g.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(-60px)',opacity:0}],{duration:700,easing:'ease-out'}).onfinish=end;setTimeout(end,780)}
+function catchAct(c){const a=$('mgact');if(!a)return;a.setAttribute('class','');a.getBoundingClientRect();a.setAttribute('class','mgact '+c)}
+function startCatch(){if(mini)return;mini=true;const k=S.stage,p=ST[k],vb=p.vb.split(' ').map(Number),sm=Math.min(1,240/-vb[1]);
+ const box=$('mg'),svg=$('mgs'),sc=$('scene');const rs=$('screen');box.style.top=(sc.getBoundingClientRect().top-rs.getBoundingClientRect().top-rs.clientTop)+'px';box.style.height=sc.getBoundingClientRect().height+'px';box.hidden=false;
+ svg.innerHTML=`<defs><linearGradient id="mgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#38a4f7"/><stop offset=".6" stop-color="#8fdcff"/><stop offset="1" stop-color="#fff0c9"/></linearGradient></defs>
+<rect width="1000" height="600" fill="url(#mgSky)"/>${cloud(170,110,1,2)}${cloud(560,80,.8,9)}${cloud(860,170,.7,5)}
+<path d="M0 520 C150 480,300 500,450 520 C620 490,800 480,1000 515 L1000 600 L0 600 Z" fill="#8fe06a"/><rect y="${GROUND_Y}" width="1000" height="60" fill="url(#gGrass)" style="fill:#5fc65f"/>
+<g id="mgm" transform="translate(500,${GROUND_Y}) scale(${f2(sm)})"><g id="mgact" class="mgact"><g class="popin">${mon(CUR,k,'g',false)}</g></g></g>
+<g id="mgi"></g><g id="mgfx"></g>
+<g transform="translate(24,16)"><rect width="190" height="54" rx="18" fill="#fff" stroke="${L}" stroke-width="4"/><text id="mgsc" x="95" y="39" text-anchor="middle" font-size="32" font-weight="800" fill="${L}">0</text></g>
+<g transform="translate(380,26)"><rect width="240" height="26" rx="13" fill="#fff" stroke="${L}" stroke-width="4"/><rect id="mgt" x="4" y="4" width="232" height="18" rx="9" fill="#ffb800"/></g>`;
+ CG={k,list:[],score:0,t:0,spawnT:0,mx:500,tx:500,done:false,last:performance.now(),sm,items:$('mgi'),fx:$('mgfx'),box,raf:0};
+ const move=e=>{if(e.target.closest('button'))return;const r=box.getBoundingClientRect();CG.tx=Math.max(70,Math.min(930,(e.clientX-r.left)/r.width*1000));if(e.cancelable)e.preventDefault()};
+ CG.move=move;box.addEventListener('pointermove',move);box.addEventListener('pointerdown',move);
+ $('mg-skip').onclick=()=>catchEnd(true);
+ CG.raf=requestAnimationFrame(catchTick)}
+function catchTick(now){if(!CG||CG.done)return;CG.raf=requestAnimationFrame(catchTick);const dt=Math.min(.05,(now-CG.last)/1000);CG.last=now;CG.t+=dt;
+ const T=CG.t,prog=Math.min(1,T/CATCH_T),speed=1+prog*1.5;
+ CG.spawnT-=dt;if(CG.spawnT<=0&&T<CATCH_T-.8){catchSpawn();CG.spawnT=Math.max(.36,.95-.55*prog)}
+ CG.mx+=(CG.tx-CG.mx)*Math.min(1,dt*14);const dir=CG.tx<CG.mx-4?-1:CG.tx>CG.mx+4?1:(CG.dir||1);CG.dir=dir;
+ $('mgm').setAttribute('transform',`translate(${f(CG.mx)},${GROUND_Y}) scale(${f2(CG.sm*dir)},${f2(CG.sm)})`);
+ CG.list=CG.list.filter(o=>{o.y+=190*speed*o.vy*dt;o.rot+=o.spin*dt;
+  if(o.y>=CATCH_Y&&o.y<=GROUND_Y+20&&Math.abs(o.x-CG.mx)<CATCH_HW){CG.score+=o.kind;o.el.remove();catchAct(o.kind>0?'chomp':'no');catchFloat(o.x,o.y-30,o.kind>0?'+1':'-1',o.kind>0?'#7dff7a':'#ff6b6b');$('mgsc').textContent=CG.score;return false}
+  if(o.y>650){o.el.remove();return false}
+  o.el.setAttribute('transform',`translate(${f(o.x)},${f(o.y)}) rotate(${f(o.rot)})`);return true});
+ $('mgt').setAttribute('width',f(232*(1-prog)));
+ if(T>=CATCH_T&&!CG.list.length||T>=CATCH_T+3)catchEnd(false)}
+// fin : éclat avec le score (sauf si on quitte avec « Passer »), puis récompense et retour à la scène
+function catchEnd(skip){if(!CG||CG.done)return;CG.done=true;cancelAnimationFrame(CG.raf);
+ const sc=Math.max(0,CG.score),rec=!skip&&sc>(S.best.catch||0);
+ const finish=()=>{const b=CG.box;b.removeEventListener('pointermove',CG.move);b.removeEventListener('pointerdown',CG.move);b.hidden=true;$('mgs').innerHTML='';CG=null;mini=false;
+  const r=skip?0:Math.min(1,sc/15);S.humeur=clamp(S.humeur+10+Math.round(20*r));S.energie=clamp(S.energie-10);gain(2+Math.round(10*r));
+  if(rec)S.best.catch=sc;react('jump');pop(skip?'BOING !':rec?'RECORD !':rnd(['YOUPI !','BOING !','HIHI !']));done()};
+ if(skip)return finish();
+ CG.items.innerHTML='';CG.fx.innerHTML=`<g transform="translate(500,270) rotate(-7)"><g class="popin"><polygon points="${star(0,0,150,96,14)}" fill="#ffe14d" stroke="${L}" stroke-width="5" stroke-linejoin="round"/><polygon points="${star(0,0,124,86,14)}" fill="#fff6b0"/><text x="0" y="22" text-anchor="middle" font-size="72" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="8" paint-order="stroke" stroke-linejoin="round">${sc}</text>${rec?`<text x="0" y="-52" text-anchor="middle" font-size="30" font-weight="800" fill="#ff4f5e" stroke="${L}" stroke-width="6" paint-order="stroke">RECORD !</text>`:''}</g></g>`;
+ setTimeout(finish,1700)}
+/* ---------- mini-jeu « Détruire » : frappe au bon moment ---------- */
+// Un curseur va et vient sur une barre : vert = coup critique (dégâts x 3), jaune = coup normal, ailleurs = raté.
+// Trois frappes par action, la zone verte rétrécit à chaque frappe. Coût de la série : énergie -15.
+const STRIKE_G=[.15,.10,.06],STRIKE_Y=[.42,.34,.27],STRIKE_N=3;
+let SG=null;
+function strikeZones(){const n=SG.n,c=.3+Math.random()*.4;SG.c=c;SG.gw=STRIKE_G[n];SG.yw=STRIKE_Y[n];
+ const y=$('st-y'),g=$('st-g');y.style.left=((c-SG.yw/2)*100)+'%';y.style.width=(SG.yw*100)+'%';g.style.left=((c-SG.gw/2)*100)+'%';g.style.width=(SG.gw*100)+'%'}
+function startStrike(){if(mini)return;mini=true;
+ SG={n:0,p:0,dir:1,wait:.4,last:performance.now(),raf:0,res:[],done:false};
+ $('st-p').innerHTML='<i></i><i></i><i></i>';strikeZones();$('st').hidden=false;
+ const hit=e=>{if(e.target.closest('button'))return;e.preventDefault();strikeTap()};
+ const key=e=>{if(e.key==' '||e.key=='Enter'){e.preventDefault();strikeTap()}};
+ SG.hit=hit;SG.key=key;$('st').addEventListener('pointerdown',hit);document.addEventListener('keydown',key);
+ $('st-skip').onclick=()=>strikeEnd();
+ SG.raf=requestAnimationFrame(strikeTick)}
+function strikeTick(now){if(!SG||SG.done)return;SG.raf=requestAnimationFrame(strikeTick);const dt=Math.min(.05,(now-SG.last)/1000);SG.last=now;
+ if(SG.wait>0)SG.wait-=dt;
+ SG.p+=SG.dir*(1.1+.25*SG.n)*dt;if(SG.p>=1){SG.p=1;SG.dir=-1}else if(SG.p<=0){SG.p=0;SG.dir=1}
+ $('st-c').style.left=(SG.p*100)+'%'}
+function strikeTap(){if(!SG||SG.done||SG.wait>0)return;
+ const d=Math.abs(SG.p-SG.c),crit=d<=SG.gw/2,ok=d<=SG.yw/2,res=crit?'crit':ok?'ok':'miss',dmg=HIT[S.stage];
+ SG.res.push(res);SG.wait=.5;SG.n++;
+ const pip=$('st-p').children[SG.n-1];if(pip)pip.className=res;
+ if(res=='miss'){pop('PFFF…');react('no')}
+ else{react('jump');strikeCity(crit?dmg*3:dmg,crit?'CRAAAC !':null)}
+ if(SG.n>=STRIKE_N||!nearest()){SG.done=true;cancelAnimationFrame(SG.raf);setTimeout(strikeEnd,700)}
+ else strikeZones()}
+// fin de la série : coût en énergie, retour à la scène
+function strikeEnd(){if(!SG)return;const g=SG;SG=null;g.done=true;cancelAnimationFrame(g.raf);
+ $('st').removeEventListener('pointerdown',g.hit);document.removeEventListener('keydown',g.key);$('st').hidden=true;mini=false;
+ if(g.n>0){S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12)}
+ done()}
 /* démarrage */
-function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];drawAll()}}
-function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0};save();show();scrollTo(0,0)}
+function show(){$('app').classList.toggle('home',!S);if(S){CUR=D[S.mon];buildWorld();drawAll()}else stopPrey()}
+function start(i){const now=Date.now();S={v:1,mon:i,stage:'oeuf',xp:0,faim:60,humeur:80,energie:80,propre:100,asleep:false,born:now,t:now,dmg:0,want:0,since:now,care:50,dayK:-1,dayXp:0,city:{niveau:1,pv:{}},best:{catch:0}};save();show();scrollTo(0,0)}
 $('species').addEventListener('click',e=>{const c=e.target.closest('.card');if(c)start(+c.dataset.i)});
-$('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S)feed(+c.dataset.i)});
-$('actions').addEventListener('click',e=>{const c=e.target.closest('.btn');if(c&&S&&S.stage!='oeuf')DO[c.dataset.a]()});
+$('tray').addEventListener('click',e=>{const c=e.target.closest('.food');if(c&&S&&!mini)feed(+c.dataset.i)});
+$('actions').addEventListener('click',e=>{const c=e.target.closest('.btn');if(c&&S&&S.stage!='oeuf'&&!mini)DO[c.dataset.a]()});
 $('b-new').addEventListener('click',()=>{if(confirm('Recommencer avec un nouvel œuf ? Ton monstre actuel sera perdu.')){try{localStorage.removeItem(KEY)}catch(e){}S=null;show()}});
-setInterval(()=>{if(!S)return;const now=Date.now();decay((now-S.t)/1000);S.t=now;hud();save()},1000);
-S=load();if(S){decay((Date.now()-S.t)/4000);S.t=Date.now()} // page fermée : le temps compte quatre fois moins
+setInterval(()=>{if(!S)return;const now=Date.now();decay((now-S.t)/1000*DEBUG_SPEED);S.t=now;if(!evolve())hud();save()},1000);
+S=load();if(S){const gap=Date.now()-S.t;decay(gap/4000*DEBUG_SPEED,true);S.t=Date.now();if(gap>=6e5)visite()} // page fermée : le temps compte quatre fois moins, jamais sous 15
 show();
 </script>
 </body>

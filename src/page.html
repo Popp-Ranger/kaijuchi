@@ -16,9 +16,11 @@
     <div class="screen" id="screen">
       <div class="gauges" id="gauges"></div>
       <svg id="scene" viewBox="0 0 1000 600" data-s="oeuf"></svg>
+      <div class="mg" id="mg" hidden><svg id="mgs" viewBox="0 0 1000 600"></svg><button class="chip mini mgskip" id="mg-skip" type="button">Passer</button></div>
+      <div class="st" id="st" hidden><div class="stp"><div class="stpips" id="st-p"></div><div class="stbar"><i class="sty" id="st-y"></i><i class="stg" id="st-g"></i><b class="stc" id="st-c"></b></div></div><button class="chip mini mgskip" id="st-skip" type="button">Passer</button></div>
     </div>
     <div class="row">
-      <div class="evo"><div class="t"><span>Évolution</span><span id="e-next"></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
+      <div class="evo"><div class="t"><span>Évolution</span><span><span class="capm" id="e-cap" hidden title="Assez joué pour aujourd'hui : plus de points avant demain"></span><span id="e-next"></span></span></div><div class="bar"><i id="e-bar" style="width:0%"></i></div></div>
       <div class="tray" id="tray"></div>
     </div>
     <div class="actions" id="actions"></div>

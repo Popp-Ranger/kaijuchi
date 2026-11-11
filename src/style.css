@@ -107,6 +107,27 @@ svg[data-s=oeuf] .p-oeuf,svg[data-s=bebe] .p-bebe,svg[data-s=ado] .p-ado,svg[dat
 .wig{animation:wig 1.8s ease-in-out infinite alternate;transform-origin:0 0}
 @keyframes wig{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
 /* jeu */
+svg[data-s=titan] [data-b]{cursor:pointer}
+.mg{position:absolute;left:0;right:0;top:0;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize}
+.mg[hidden]{display:none}
+.mg>svg{display:block;width:100%;height:100%}
+.mgskip{position:absolute;right:14px;bottom:12px;font-size:16px;padding:4px 18px}
+.st{position:absolute;inset:0;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.st[hidden]{display:none}
+#st-skip{bottom:96px}
+.stp{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(70%,560px);background:var(--cream);border:4px solid var(--ink);border-radius:22px;padding:8px 14px 12px;box-shadow:0 5px 0 var(--ink)}
+.stpips{display:flex;justify-content:center;gap:10px;margin-bottom:6px}
+.stpips i{width:18px;height:18px;border-radius:50%;border:3px solid var(--ink);background:#fff}
+.stpips i.crit{background:#ffd23f}.stpips i.ok{background:#5ed36a}.stpips i.miss{background:#9a94b3}
+.stbar{position:relative;height:34px;border:4px solid var(--ink);border-radius:20px;background:#ff8a7a;overflow:hidden}
+.stbar i{position:absolute;top:0;bottom:0}
+.sty{background:#ffd23f}.stg{background:#5ed36a;border-left:3px solid var(--ink);border-right:3px solid var(--ink)}
+.stc{position:absolute;top:0;bottom:0;width:10px;margin-left:-5px;background:#fff;border:3px solid var(--ink);border-radius:5px}
+.mgact.chomp{animation:chomp .35s ease-in-out}
+.mgact.no{animation:no .35s ease-in-out}
+.capm{display:inline-block;vertical-align:middle;margin-right:6px}
+.capm[hidden]{display:none}
+.capm svg{width:22px;height:22px;display:block}
 .app.home #game,.app.home .top .chip{display:none}
 .app:not(.home) #home{display:none}
 #home .card .n{font-size:24px}

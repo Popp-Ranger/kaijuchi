@@ -1,5 +1,5 @@
 /* ---------- le monde ---------- */
-function world(){const R=mb(11);let b='',fg='';
+function world(lv=1,pvs={}){const R=mb(11+lv*31);let b='',fg='';
  // sol, plage, mer
  b+=`<rect x="-360" y="-52" width="1500" height="362" fill="url(#gGrass)"/>`;
  for(let i=0;i<40;i++)b+=`<ellipse cx="${f(-250+R()*1500)}" cy="${f(10+R()*300)}" rx="${f(30+R()*50)}" ry="${f(5+R()*6)}" fill="#8fe06a" opacity=".5"/>`;
@@ -18,23 +18,14 @@ function world(){const R=mb(11);let b='',fg='';
  b+=lighthouse(-352,-50);
  // immeubles
  b+=ruin(-288,62,196,PAL[4]);
- let i=0;for(let x=-216;x<1070;){if(x>312&&x<372){b+=tower(352);x=388;continue}
-  const w=50+R()*44,h=Math.round(110+R()*200+(R()<.2?70:0));b+=building(x,w,h,PAL[(i*3+Math.floor(R()*3))%8],R);i++;x+=w+(R()<.3?16:1)}
- b+=wheel(840);
+ cityDefs(lv).forEach(B=>{b+=`<g data-b="${B.id}">${bldSvg(B,pvOf(B,pvs))}</g>`});if(lv>=5)b+=tower(352);
+ if(lv>=5)b+=wheel(840);
  // arbres, lampadaires, passants du trottoir
  for(let x=-270;x<1080;x+=70+R()*60)b+=tree(x,-42,.85+R()*.3,Math.floor(R()*3));
  for(let x=-240;x<1080;x+=150)b+=lamp(x,-41);
- const ps=[];for(let k=0;k<26;k++){const x=100+R()*950;ps.push(person(x,-41,k,R()<.8?1:-1,.9))}
- for(let k=0;k<5;k++)ps.push(person(-300+R()*60,-41,k+3,-1,.9));b+=grp(ps);
- // véhicules
- b+=car(-262,-29,'#4db8ff',-1)+car(196,-29,'#ffd23f',-1)+bus(380,-29,'#ff5a5a',-1)+car(560,-29,'#b58cff',-1)+car(720,-29,'#5ed36a',-1)+car(905,-29,'#ff8fc0',-1);
- b+=car(-150,-15,'#ff9a3c',1)+car(270,-15,'#ff5a5a',1)+car(450,-15,'#fff',1)+car(640,-15,'#4db8ff',1)+bus(800,-15,'#ffd23f',1)+car(980,-15,'#5ed36a',1);
- // bateaux
- b+=cargo(-640,-34,1,3)+cargo(-930,-40,.7,8)+sail(-430,-20,1,'#ff8fc0')+sail(-540,70,1.2,'#5ed36a')+sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
- // hélicoptères
- b+=heli(262,-338,1,'#ff9320',0)+heli(-700,-330,1.5,'#4db8ff',.6)+heli(720,-700,1.5,'#ff5a8a',1.1);
+ if(lv>=4)b+=sail(-800,130,1.3,'#ffd23f')+sail(-960,40,1,'#b58cff')+sail(-430,190,1.3,'#ff9a3c')+sail(-700,240,1.4,'#ff8fc0');
  // dégâts
- b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g><g class="prop p-titan">${fire(900,-190,2.6)}${fire(980,-150,2.2)}${fire(640,-170,2)}</g>`;
+ b+=`<g class="prop p-adulte p-titan">${fire(-262,-232,1.3)}${fire(-244,-214,.9)}</g>`;
  // passants sur l'herbe
  const pb=[],pf=[];for(let k=0;k<22;k++){const x=150+R()*420,y=-8+R()*22;(y<0?pb:pf).push(person(x,y,k+2,1))}
  for(let k=0;k<8;k++){const x=-250-R()*40,y=2+R()*14;pf.push(person(x,y,k,-1))}
