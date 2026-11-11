@@ -577,8 +577,9 @@ const D=[
 ];
 
 /* ---------- rendu ---------- */
-function mon(d,k,u,full){const p=ST[k],c=d.c,bs=p.bs,hs=p.hs,G=n=>n+d.id+k+u;
+function mon(d,k,u,full,o={}){const p=ST[k],c=d.c,bs=p.bs,hs=p.hs,G=n=>n+d.id+k+u;
  const t={p,c,G,gb:`url(#${G('gb')})`,gs:`url(#${G('gs')})`,fl:`url(#${G('fl')})`,ss:p.ss,bs,hs,glow:p.glow||d.glow};
+ t.k=k;t.mood=o.mood||"content";t.pose=o.pose||"debout";
  t.held=p.hold&&full?`<g transform="translate(${d.hand}) rotate(-24)">${car(0,0,'#ff5a5a',1,1.25)}</g>`:'';
  const bm=d.bm||[0,0],beam=p.beam&&full?`<g transform="translate(${bm})"><g class="beam"><path d="M90 16 L640 110 L600 250 L90 36 Z" fill="url(#${G('gbm')})" filter="${t.fl}"/><path d="M92 20 L620 150 L604 208 L92 32 Z" fill="url(#${G('gbm')})"/><path d="M94 23 L560 160 L556 178 L94 29 Z" fill="#fff" opacity=".9"/></g></g>`:'';
  const hat=p.hat&&d.hat?`<g transform="translate(${d.hat[0]},${d.hat[1]}) scale(${d.hat[2]})" style="--lw:${f2(1/(hs*d.hat[2]))}"><path class="ol" d="M-52 -40 L-40 -58 L-27 -44 L-13 -64 L2 -48 L17 -66 L31 -50 L45 -60 L52 -40 C44 -92,-36 -96,-52 -40 Z" fill="#fffaf0"/><circle cx="-18" cy="-72" r="6" fill="#7fe0c3"/><circle cx="14" cy="-76" r="4.5" fill="#ff9ecb"/><circle cx="32" cy="-66" r="3.5" fill="#ffd23f"/></g>`:'';
