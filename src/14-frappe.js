@@ -21,8 +21,8 @@ function strikeTap(){if(!SG||SG.done||SG.wait>0)return;
  const d=Math.abs(SG.p-SG.c),crit=d<=SG.gw/2,ok=d<=SG.yw/2,res=crit?'crit':ok?'ok':'miss',dmg=HIT[S.stage];
  SG.res.push(res);SG.wait=.5;SG.n++;
  const pip=$('st-p').children[SG.n-1];if(pip)pip.className=res;
- if(res=='miss'){pop('PFFF…');react('no')}
- else{react('jump');strikeCity(crit?dmg*3:dmg,crit?'CRAAAC !':null)}
+ if(res=='miss'){pop('PFFF…');react('no');strike('debout','fatigue',600)}
+ else{react('jump');strike('frappe','colere',600);strikeCity(crit?dmg*3:dmg,crit?'CRAAAC !':null)}
  if(SG.n>=STRIKE_N||!nearest()){SG.done=true;cancelAnimationFrame(SG.raf);setTimeout(strikeEnd,700)}
  else strikeZones()}
 // fin de la série : coût en énergie, retour à la scène

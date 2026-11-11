@@ -111,7 +111,7 @@ function evolve(){const k=S.stage,n=NEED[k];if(!ready())return false;S.xp-=n;S.s
  if(k=='oeuf')Object.assign(S,{faim:60,humeur:80,energie:80,propre:100});else S.humeur=clamp(S.humeur+20);
  drawAll();flash();pop(k=='oeuf'?'CRAC !':'GRAOU !');return true}
 function done(){if(!evolve())hud();save()}
-function refuse(t){pop(t);react('no')}
+function refuse(t){pop(t);react('no');strike('debout','colere',700)}
 function feed(i,src){const k=S.stage,fo=FOODS[k];if(mini||busy())return false;
  if(k=='oeuf'){gain(fo[i][3]);if(i)S.humeur=clamp(S.humeur+3);react('chomp');pop(i?'SMACK !':'TOC TOC');done();return true}
  if(S.asleep){pop('ZZZ…');return false}
@@ -119,7 +119,7 @@ function feed(i,src){const k=S.stage,fo=FOODS[k];if(mini||busy())return false;
  if(S.faim>=96){refuse('BEURK !');return false}
  const m=fo[i],wanted=need()==m[0];fly(m[0],src&&src[0],src&&src[1]);
  setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
-  react('chomp');pop(rnd(MIAM[k]));done()},430);return true}
+  react('chomp');strike('mange','miam',700);pop(rnd(MIAM[k]));done()},430);return true}
 function play(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');startCatch()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}
 function wash(){if(busy())return;if(S.asleep)return pop('ZZZ…');S.propre=clamp(S.propre+40);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']));done()}
