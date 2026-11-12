@@ -19,7 +19,7 @@ const BUB={oeuf:[660,300],bebe:[650,255],ado:[690,190],adulte:[285,160],titan:[1
 $('e-cap').innerHTML=ui('moon');
 const GA=[['faim','meat','Faim','#ffb199','#ff5f3d'],['humeur','heart','Humeur','#ff9ecb','#ff4f8b'],['energie','bolt','Énergie','#ffe98a','#ffb800'],['propre','drop','Propreté','#9fe0ff','#2f9cf0']];
 $('gauges').innerHTML=GA.map(g=>`<div class="gauge" id="g-${g[0]}"><div class="ic">${ui(g[1])}</div><div class="trk"><div class="fill" style="width:0%;--g1:${g[3]};--g2:${g[4]}"></div><div class="lbl"><span>${g[2]}</span><span class="pc"></span></div></div></div>`).join('');
-const AC=[['feed','meat','Nourrir','#ffb36b','#f2681f'],['play','ball','Jouer','#8be08a','#2fa84f'],['sleep','moon','Dormir','#9d8cff','#5a45d6'],['wash','soap','Laver','#7fd4ff','#1f8fe0'],['destroy','boom','Détruire','#ff8a7a','#e02d4f']];
+const AC=[['play','ball','Jouer','#8be08a','#2fa84f'],['sleep','moon','Dormir','#9d8cff','#5a45d6'],['wash','soap','Laver','#7fd4ff','#1f8fe0'],['destroy','boom','Détruire','#ff8a7a','#e02d4f']];
 $('actions').innerHTML=AC.map(a=>`<button class="btn" data-a="${a[0]}" style="--b1:${a[3]};--b2:${a[4]}">${ui(a[1])}<span>${a[2]}</span><svg class="lock" viewBox="0 0 30 30">${UI.lock}</svg></button>`).join('');
 $('species').innerHTML=D.map((d,i)=>{const vb=d.vb.join(' ');return `<div class="card" data-i="${i}" style="--cb:${d.cb}"><svg viewBox="${vb}">${rays(vb)}${mon(d,'adulte','p',false)}</svg><div class="n">${d.name}</div><div class="a">${d.tag}</div></div>`}).join('');
 
@@ -40,7 +40,7 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function decayStep(dt){dt=Math.min(dt,12*3600);
  if(S.asleep){const full=(100-S.energie)*3,d=Math.min(dt,full);S.energie=clamp(S.energie+d/3);S.faim=clamp(S.faim-d/90);dt-=d;if(S.energie>=100)S.asleep=false;if(dt<=0)return}
  const sad=(S.faim<20||S.propre<20)?2:1;
- S.faim=clamp(S.faim-dt/45);S.humeur=clamp(S.humeur-dt*sad/60);S.energie=clamp(S.energie-dt/90);S.propre=clamp(S.propre-dt/120)}
+ S.faim=clamp(S.faim-dt/45);S.humeur=clamp(S.humeur-dt*sad/60);S.energie=clamp(S.energie-dt/90);S.propre=clamp(S.propre-dt/50)}
 // off = page fermée : aucune jauge ne descend sous 15 (si elle était déjà plus bas, elle ne bouge pas)
 function decay(dt,off){if(S.stage=='oeuf'||dt<=0)return;const old=GA.map(g=>S[g[0]]);decayStep(dt);
  if(off)GA.forEach((g,i)=>{S[g[0]]=Math.max(S[g[0]],Math.min(old[i],15))})}
@@ -79,7 +79,7 @@ function hud(){const k=S.stage,p=ST[k],isEgg=k=='oeuf';
  $('scene').classList.toggle('sleep',!!S.asleep);
  document.querySelectorAll('#actions .btn').forEach(b=>{const a=b.dataset.a;b.classList.toggle('locked',isEgg||(S.asleep&&a!='sleep')||(a=='destroy'&&idx()<2));if(a=='sleep')b.querySelector('span').textContent=S.asleep?'Réveiller':'Dormir'});
  $('tray').classList.toggle('off',!!S.asleep);drawBubble()}
-function drawTray(){$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.stage].map((m,i)=>`<button class="food" data-i="${i}">${ic(m[0])}<div><div class="n">${m[1]}</div><div class="v">${S.stage=='oeuf'?(i?'+ humeur':'éclosion'):'+'+m[2]+' faim'}</div></div></button>`).join('')}
+function drawTray(){$('tray').classList.toggle('info',S.stage!='oeuf');$('tray').innerHTML=`<div class="tt">Au menu</div>`+FOODS[S.stage].map((m,i)=>`<button class="food" data-i="${i}">${ic(m[0])}<div><div class="n">${m[1]}</div><div class="v">${S.stage=='oeuf'?(i?'+ humeur':'éclosion'):'+'+m[2]+' faim'}</div></div></button>`).join('')}
 function drawAlbum(){const n=idx();$('stages').innerHTML=ORDER.map((k,i)=>{const p=ST[k],ok=i<=n;return `<div class="card album${i==n?' on':''}${ok?'':' lock'}" style="--cb:${p.cb}"><svg viewBox="${p.vb}">${rays(p.vb)}<g class="sil">${k=='oeuf'?egg('c',CUR):mon(CUR,k,'c',false)}</g></svg><div class="n">${ok?p.n:'???'}</div><div class="a">${ok?p.short:'à découvrir'}</div></div>`}).join('')}
 function drawMon(){const k=S.stage,p=ST[k];$('scene').dataset.s=k;zoomTo(p.z);
  MON.setAttribute('transform',`translate(500,470) scale(${p.m})`);MON.innerHTML=`<g id="act"><g class="popin">${k=='oeuf'?egg('s',CUR):mon(CUR,k,'s',true)}</g></g>`}
@@ -118,7 +118,7 @@ function feed(i,src){const k=S.stage,fo=FOODS[k];if(mini||busy())return false;
  if(i==null){const w=need();i=fo.findIndex(m=>m[0]==w);if(i<0)i=Math.floor(Math.random()*fo.length)}
  if(S.faim>=96){refuse('BEURK !');return false}
  const m=fo[i],wanted=need()==m[0];fly(m[0],src&&src[0],src&&src[1]);
- setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-3);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
+ setTimeout(()=>{if(!S||S.stage!=k)return;S.faim=clamp(S.faim+m[2]);gain(m[3]);S.propre=clamp(S.propre-5);if(wanted){S.humeur=clamp(S.humeur+6);S.want++}
   react('chomp');strike('mange','miam',700);pop(rnd(MIAM[k]));done()},430);return true}
 function play(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');if(S.energie<10)return refuse('PFFF…');startCatch()}
 function sleep(){if(busy())return;S.asleep=!S.asleep;if(!S.asleep)pop('OUAAAH !');done()}

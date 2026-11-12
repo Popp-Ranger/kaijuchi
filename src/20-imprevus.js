@@ -60,7 +60,7 @@ function giftClaim(){if(!S||!giftEl.classList.contains('on'))return;const s=gift
 giftEl.addEventListener('click',e=>{if(e.target.closest('#gift-ok'))giftClaim()});
 const giftCheck=()=>{if(S&&S.gift.day!=realDay()&&!giftEl.classList.contains('on'))giftShow()};
 
-addCss(`#actions.six{grid-template-columns:repeat(6,minmax(0,1fr))}.btn[hidden]{display:none}
+addCss(`#actions.six{grid-template-columns:repeat(5,minmax(0,1fr))}.btn[hidden]{display:none}
 #mon.sick{filter:sepia(.6) hue-rotate(38deg) saturate(1.7) brightness(.95)}
 #gift{position:fixed;inset:0;z-index:55;background:rgba(42,33,64,.6);display:none;place-items:center;padding:16px}#gift.on{display:grid}
 #gift .gc{background:var(--cream);border:4px solid var(--ink);border-radius:26px;box-shadow:0 8px 0 var(--ink);padding:18px 22px 22px;text-align:center;max-width:380px;width:100%}

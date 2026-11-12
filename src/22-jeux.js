@@ -177,8 +177,8 @@ PGS_LAVE={par:4,dur:45,sky:'#6fc3f0',hint:[500,400],
   if(G.ph==3)pgPuff(`<polygon points="${star(0,0,16,6,4)}" fill="#fff6a0" stroke="${L}" stroke-width="2"/>`,x+r(),y+r(),0,-40,600)},
  down(G,x,y){G.px=x;G.py=y;G.tx=x;G.ty=y-40;pgAt(G.tool,G.tx,G.ty,1.3)},up(G){G.px=null},
  move(G,x,y){if(G.ph>3)return;G.tx=x;G.ty=y-40;pgAt(G.tool,G.tx,G.ty,1.3);if(!G.dn){G.px=null;return}
-  if(G.px!=null&&Math.abs(x-500)<200&&y>230&&y<GROUND_Y+10){const d=Math.hypot(x-G.px,y-G.py);G.a+=d;G.e=(G.e||0)+d;if(G.e>42){G.e=0;PGS_LAVE.fx(G,x,y)}
-   if(G.a>850){pgTxt(500,190,LAVE_W[G.ph],'#7dff7a');pgSfx('bulles');PGS_LAVE.next(G)}}
+  if(G.px!=null&&Math.abs(x-500)<200&&y>230&&y<GROUND_Y+10){const d=Math.hypot(x-G.px,y-G.py);G.a+=d;G.e=(G.e||0)+d;if(G.e>80){G.e=0;PGS_LAVE.fx(G,x,y)}
+   if(G.a>1700){pgTxt(500,190,LAVE_W[G.ph],'#7dff7a');pgSfx('bulles');PGS_LAVE.next(G)}}
   G.px=x;G.py=y},
  // fin : le lavage d'origine s'applique toujours ; les quatre étapes faites rendent le monstre tout propre
  end(G,skip){const full=!skip&&G.ph>=4;LAVE0();if(full){S.propre=100;S.humeur=clamp(S.humeur+8);done()}}};

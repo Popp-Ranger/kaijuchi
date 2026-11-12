@@ -9,6 +9,8 @@ const MV={
  ladybug:{f:'ladybug',r:24,cy:-11,v:7,m:'bounce',art:1,y:()=>6+Math.random()*18,sp:()=>ladybug(0,0,1.3)},
  apple:{f:'apple',r:24,cy:-19,v:11,m:'bounce',art:1,spin:1,y:()=>8+Math.random()*18,sp:()=>apple(0,0,1.3)},
  fish:{f:'fish',r:32,cy:0,m:'leap',art:1,sp:()=>fish(0,0,1.4)},
+ tree:{f:'tree',r:34,cy:-32,v:0,m:'bounce',art:1,y:()=>6+Math.random()*16,sp:()=>tree(0,0,1)},
+ lamp:{f:'lamp',r:30,cy:-40,v:0,m:'bounce',art:1,y:()=>-44,sp:()=>lamp(0,0)},
  cow:{f:'cow',r:46,cy:-26,v:9,m:'bounce',art:-1,y:()=>-2+Math.random()*12,sp:()=>cow(0,0,1,1)},
  car:{f:'car',r:42,cy:-18,v:68,m:'wrap',art:1,lane:()=>rnd([[-29,-1],[-15,1]]),sp:()=>car(0,0,rnd(CARC),1,1)},
  bus:{f:'bus',r:56,cy:-22,v:52,m:'wrap',art:1,lane:()=>rnd([[-29,-1],[-15,1]]),sp:()=>bus(0,0,rnd(CARC),1)},
@@ -22,7 +24,7 @@ const MV={
   sp:()=>`<path class="o" d="M-104 -10 L104 -10 L86 8 L-86 8 Z" fill="#8a84a3"/><g transform="translate(-88,-8)">${IC.district[1]}</g>`}
 };
 // population par stade : [type, nombre] (douze objets mobiles au plus)
-const POP={bebe:[['butterfly',2],['ladybug',1],['apple',1],['fish',1]],ado:[['cow',1],['car',2],['bus',1],['walker',1]],
+const POP={bebe:[['butterfly',2],['ladybug',1],['apple',1],['fish',1]],ado:[['cow',1],['car',2],['tree',1],['lamp',1]],
  adulte:[['boat',1],['heli',1],['crowd',2],['bus',1],['car',2]],titan:[['cargo',1],['district',1],['car',2],['bus',1],['boat',1],['heli',1]]};
 const MAXMV=8,EDGE=170;
 let PR=[],preyStage=null,preyRaf=0,preyT=0,pid=0;
