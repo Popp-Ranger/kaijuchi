@@ -8,9 +8,9 @@ function strikeZones(){const n=SG.n,c=.3+Math.random()*.4;SG.c=c;SG.gw=STRIKE_G[
 function startStrike(){if(mini)return;mini=true;
  SG={n:0,p:0,dir:1,wait:.4,last:performance.now(),raf:0,res:[],done:false};
  $('st-p').innerHTML='<i></i><i></i><i></i>';strikeZones();$('st').hidden=false;
- const hit=e=>{if(e.target.closest('button'))return;e.preventDefault();strikeTap()};
+ const hit=e=>{const t=e.target;if(t.closest('#st-skip')||!(t.closest('#st')||t.closest('.btn[data-a="destroy"]')))return;e.preventDefault();strikeTap()};
  const key=e=>{if(e.key==' '||e.key=='Enter'){e.preventDefault();strikeTap()}};
- SG.hit=hit;SG.key=key;$('st').addEventListener('pointerdown',hit);document.addEventListener('keydown',key);
+ SG.hit=hit;SG.key=key;document.addEventListener('pointerdown',hit);document.addEventListener('keydown',key);
  $('st-skip').onclick=()=>strikeEnd();
  SG.raf=requestAnimationFrame(strikeTick)}
 function strikeTick(now){if(!SG||SG.done)return;SG.raf=requestAnimationFrame(strikeTick);const dt=Math.min(.05,(now-SG.last)/1000);SG.last=now;
@@ -27,6 +27,6 @@ function strikeTap(){if(!SG||SG.done||SG.wait>0)return;
  else strikeZones()}
 // fin de la série : coût en énergie, retour à la scène
 function strikeEnd(){if(!SG)return;const g=SG;SG=null;g.done=true;cancelAnimationFrame(g.raf);
- $('st').removeEventListener('pointerdown',g.hit);document.removeEventListener('keydown',g.key);$('st').hidden=true;mini=false;
- if(g.n>0){S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12)}
+ document.removeEventListener('pointerdown',g.hit);document.removeEventListener('keydown',g.key);$('st').hidden=true;mini=false;
+ if(g.n>0){S.energie=clamp(S.energie-15);S.faim=clamp(S.faim-8);S.humeur=clamp(S.humeur+12);S.propre=clamp(S.propre-4-7*g.res.filter(r=>r!='miss').length)}
  done()}
