@@ -1823,7 +1823,7 @@ function pgStart(id){if(mini)return;mini=true;const def=PGS[id],k=S.stage,vb=ST[
  def.init(G);if(def.hint)pgHint(def.hint[0],def.hint[1]);G.raf=requestAnimationFrame(pgTick)}
 function pgTick(now){const G=PG;if(!G||G.done)return;G.raf=requestAnimationFrame(pgTick);const dt=Math.min(.05,(now-G.last)/1000);G.last=now;G.t+=dt;
  if(G.def.tick)G.def.tick(G,dt);if(PG!==G||G.done)return;
- $('mgt').setAttribute('width',f(232*Math.max(0,1-G.t/G.dur)));if(G.t>=G.dur)pgEnd(false)}
+ if(!G.def.noTimer){$('mgt').setAttribute('width',f(232*Math.max(0,1-G.t/G.dur)));if(G.t>=G.dur)pgEnd(false)}}
 function pgEnd(skip){const G=PG;if(!G||G.done)return;G.done=true;cancelAnimationFrame(G.raf);
  const sc=Math.max(0,G.score),own=G.def.end,rec=!own&&!skip&&sc>(S.best[G.id]||0);
  const finish=()=>{G.h.forEach(h=>G.box.removeEventListener(h[0],h[1]));G.box.style.cursor='';G.box.hidden=true;$('mgs').innerHTML='';PG=null;mini=false;
@@ -1946,26 +1946,33 @@ const LAVE_ART=[
  ()=>`<g transform="rotate(-12)"><rect x="-36" y="-22" width="72" height="44" rx="16" fill="#ff8fc0" stroke="${L}" stroke-width="3.5"/><ellipse cx="-12" cy="-8" rx="14" ry="6" fill="#fff" opacity=".6"/><circle cx="30" cy="-24" r="10" fill="#fff" stroke="${L}" stroke-width="2.5"/><circle cx="42" cy="-8" r="6" fill="#fff" stroke="${L}" stroke-width="2.5"/></g>`,
  null,
  ()=>`<g transform="rotate(8)"><path d="M-40 -34 L40 -34 L40 30 Q20 40 0 30 Q-20 20 -40 30 Z" fill="#ffe14d" stroke="${L}" stroke-width="3.5" stroke-linejoin="round"/><path d="M-40 -18 L40 -18 M-40 -6 L40 -6" stroke="#ff9a3c" stroke-width="6"/></g>`];
-LAVE_ART[2]=LAVE_ART[0];
-const LAVE_W=['SPLASH !','FROTT !','PLOUF !','PFOUF !'];
-PGS_LAVE={par:4,dur:45,sky:'#6fc3f0',hint:[500,400],
- init(G){G.m=pgMon(500,GROUND_Y,1.25,{});G.bl=pgEl('');G.pips=pgEl('');G.tool=pgEl('');G.ph=-1;G.tx=780;G.ty=240;PGS_LAVE.next(G)},
- next(G){G.ph++;G.a=0;G.score=Math.min(4,G.ph);$('mgsc').textContent=G.score+' / 4';
-  G.pips.innerHTML=LAVE_ART.map((a,i)=>`<g transform="translate(${70+i*84},118) scale(.62)" opacity="${i<G.ph?.35:1}"><circle r="56" fill="${i==G.ph?'#ffe14d':'#fff'}" stroke="${L}" stroke-width="5"/>${a()}</g>`).join('');
-  if(G.ph>=4){G.bl.innerHTML='';G.tool.innerHTML='';G.m.set({mood:'miam'});return pgEnd(false)}
-  if(G.ph==3)G.bl.innerHTML='';G.tool.innerHTML=LAVE_ART[G.ph]();pgAt(G.tool,G.tx,G.ty,1.3)},
- fx(G,x,y){const r=()=>(Math.random()-.5)*70;
-  if(G.ph==0||G.ph==2)for(let i=0;i<3;i++)pgPuff(`<ellipse rx="5" ry="10" fill="#4db8ff" stroke="${L}" stroke-width="2"/>`,x+r(),y+r()*.4,0,90,520);
-  if(G.ph==1)pgAt(pgEl(`<circle r="${f(12+Math.random()*14)}" fill="#fff" fill-opacity=".85" stroke="#bfe6ff" stroke-width="3"/><circle cx="-5" cy="-5" r="4" fill="#fff"/>`,G.bl),x+r(),y+r());
-  if(G.ph==2&&G.bl.firstChild){G.bl.firstChild.remove();if(G.bl.firstChild)G.bl.firstChild.remove()}
-  if(G.ph==3)pgPuff(`<polygon points="${star(0,0,16,6,4)}" fill="#fff6a0" stroke="${L}" stroke-width="2"/>`,x+r(),y+r(),0,-40,600)},
- down(G,x,y){G.px=x;G.py=y;G.tx=x;G.ty=y-40;pgAt(G.tool,G.tx,G.ty,1.3)},up(G){G.px=null},
- move(G,x,y){if(G.ph>3)return;G.tx=x;G.ty=y-40;pgAt(G.tool,G.tx,G.ty,1.3);if(!G.dn){G.px=null;return}
-  if(G.px!=null&&Math.abs(x-500)<200&&y>230&&y<GROUND_Y+10){const d=Math.hypot(x-G.px,y-G.py);G.a+=d;G.e=(G.e||0)+d;if(G.e>80){G.e=0;PGS_LAVE.fx(G,x,y)}
-   if(G.a>1700){pgTxt(500,190,LAVE_W[G.ph],'#7dff7a');pgSfx('bulles');PGS_LAVE.next(G)}}
-  G.px=x;G.py=y},
- // fin : le lavage d'origine s'applique toujours ; les quatre étapes faites rendent le monstre tout propre
- end(G,skip){const full=!skip&&G.ph>=4;LAVE0();if(full){S.propre=100;S.humeur=clamp(S.humeur+8);done()}}};
+LAVE_ART[2]=()=>`<g transform="rotate(-18)"><path d="M-30 -22 Q0 -64 30 -22" fill="none" stroke="${L}" stroke-width="3.5"/><path d="M-30 -20 L30 -20 L22 30 L-22 30 Z" fill="#8fa3c9" stroke="${L}" stroke-width="3.5" stroke-linejoin="round"/><ellipse cx="0" cy="-20" rx="30" ry="9" fill="#4db8ff" stroke="${L}" stroke-width="3.5"/></g>`;
+// Pas de chrono : des taches de boue sur le monstre. Chaque tache passe par eau, savon, rinçage, serviette ; le joueur choisit lui-même l'outil
+// dans la colonne de gauche et frotte les taches qui en sont à cette étape. La barre du haut montre l'avancement.
+const LAVE_W=['SPLASH !','FROTT !','PLOUF !','PFOUF !'],LAVE_P=[[545,325],[495,395],[540,455],[455,470],[515,515],[400,490],[590,380]];
+const lvR=n=>(Math.random()-.5)*n;
+function lvSpot(sp){const b=(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" fill-opacity=".9" stroke="#bfe6ff" stroke-width="2.5"/>`,dr=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="4.5" ry="8" fill="#4db8ff" stroke="${L}" stroke-width="1.5"/>`;
+ const mud=`<g fill="#7a5230" stroke="#4a2f1a" stroke-width="5"><circle cx="-12" cy="2" r="17"/><circle cx="11" cy="-6" r="19"/><circle cx="8" cy="14" r="14"/></g><g fill="#7a5230"><circle cx="-12" cy="2" r="17"/><circle cx="11" cy="-6" r="19"/><circle cx="8" cy="14" r="14"/></g><circle cx="6" cy="-10" r="4" fill="#a67a4d"/><circle cx="-16" cy="6" r="3" fill="#4a2f1a"/><path d="M14 22 q3 12 0 20" stroke="#7a5230" stroke-width="6" stroke-linecap="round" fill="none"/>`;
+ sp.g.innerHTML=[mud,`<g opacity=".75">${mud}</g>`+dr(-20,-18)+dr(4,-26)+dr(24,-10),b(-12,2,17)+b(12,-8,19)+b(8,14,13)+b(-6,-20,10),dr(-14,-6)+dr(6,8)+dr(16,-14),''][sp.st]}
+PGS_LAVE={par:1,dur:1e9,noTimer:true,sky:'#6fc3f0',
+ init(G){G.m=pgMon(500,GROUND_Y,1.25,{mood:'triste'});
+  G.sp=LAVE_P.map(p=>{const sp={x:p[0]+lvR(16),y:p[1]+lvR(16),st:0,a:0,g:pgEl('')};pgAt(sp.g,sp.x,sp.y);lvSpot(sp);return sp});
+  G.bt=pgEl('');G.tool=pgEl('');G.tool.style.pointerEvents='none';G.sel=-1;G.px=null;$('mgt').setAttribute('fill','#2f9cf0');PGS_LAVE.bar(G);pgHint(80,150)},
+ bar(G){const v=G.sp.reduce((s,p)=>s+p.st,0);G.pr=v/(G.sp.length*4);$('mgt').setAttribute('width',f(232*G.pr));$('mgsc').textContent=Math.round(100*G.pr)+' %';
+  G.bt.innerHTML=LAVE_ART.map((a,i)=>`<g transform="translate(80,${150+i*112})"><circle r="50" fill="${i==G.sel?'#ffe14d':'#fff'}" stroke="${L}" stroke-width="${i==G.sel?7:4}"/><g transform="scale(.8)">${a()}</g></g>`).join('')},
+ pick(G,x,y){const i=[0,1,2,3].findIndex(i=>Math.hypot(x-80,y-(150+i*112))<58);if(i<0)return false;G.sel=i;G.tool.innerHTML=LAVE_ART[i]();PGS_LAVE.bar(G);pgSfx('pop');return true},
+ down(G,x,y){G.px=null;if(PGS_LAVE.pick(G,x,y)){pgAt(G.tool,x+80,y-30,1.3);return}if(G.sel<0)return;G.px=x;G.py=y;pgAt(G.tool,x,y-40,1.3)},
+ up(G){G.px=null},
+ move(G,x,y){if(G.sel<0)return;pgAt(G.tool,x,y-40,1.3);if(!G.dn)return;if(G.px==null){G.px=x;G.py=y;return}
+  const d=Math.hypot(x-G.px,y-G.py),t=G.sel;G.px=x;G.py=y;G.e=(G.e||0)+d;
+  if(G.e>70){G.e=0;
+   if(t==0||t==2)for(let i=0;i<3;i++)pgPuff(`<ellipse rx="5" ry="10" fill="#4db8ff" stroke="${L}" stroke-width="2"/>`,x+lvR(70),y+lvR(30),0,90,520);
+   if(t==1)pgPuff(`<circle r="${f(8+Math.random()*8)}" fill="#fff" fill-opacity=".85" stroke="#bfe6ff" stroke-width="2.5"/>`,x+lvR(60),y+lvR(60),0,-50,700);
+   if(t==3)pgPuff(`<polygon points="${star(0,0,14,5,4)}" fill="#fff6a0" stroke="${L}" stroke-width="2"/>`,x+lvR(60),y+lvR(60),0,-40,600)}
+  G.sp.forEach(sp=>{if(sp.st!=t||Math.hypot(x-sp.x,y-sp.y)>75)return;sp.a+=d;if(sp.a<300)return;sp.a=0;sp.st++;lvSpot(sp);pgTxt(sp.x,sp.y-50,LAVE_W[t],'#7dff7a');pgSfx('bulles');PGS_LAVE.bar(G)});
+  if(G.pr>=1){G.m.set({mood:'miam'});G.tool.innerHTML='';pgEnd(false)}},
+ // fin : la propreté gagnée suit l'avancement ; tout nettoyer rend le monstre tout propre
+ end(G){S.propre=clamp(S.propre+Math.round(100*G.pr));if(G.pr>=1){S.humeur=clamp(S.humeur+8);bubbles();react('chomp');pop(rnd(['SPLASH !','PLOUF !','FROTT !']))}done()}};
 var PGS_LAVE;
 const LAVE0=DO.wash;
 DO.wash=function(){if(mini||busy())return;if(S.asleep)return pop('ZZZ…');PG_LAVE_GO()};
